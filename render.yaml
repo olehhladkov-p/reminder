@@ -7,7 +7,7 @@ services:
     name: reminder-api
     runtime: node
     plan: free
-    buildCommand: corepack enable && corepack prepare pnpm@11.24.0 --activate && pnpm install --frozen-lockfile && pnpm turbo run build --filter=@reminder/api...
+    buildCommand: pnpm install --frozen-lockfile && pnpm turbo run build --filter=@reminder/api...
     startCommand: node apps/api/dist/renderStart.js
     healthCheckPath: /health
     envVars:
@@ -39,7 +39,7 @@ services:
   - type: web
     name: reminder-web
     runtime: static
-    buildCommand: corepack enable && corepack prepare pnpm@11.24.0 --activate && pnpm install --frozen-lockfile && pnpm turbo run build --filter=@reminder/web...
+    buildCommand: pnpm install --frozen-lockfile && pnpm turbo run build --filter=@reminder/web...
     staticPublishPath: apps/web/dist
     envVars:
       # The reminder-api service's onrender.com URL once known.
