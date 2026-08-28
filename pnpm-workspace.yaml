@@ -1,6 +1,17 @@
 packages:
   - "apps/*"
   - "packages/*"
+overrides:
+  # drizzle-kit's deprecated esbuild-kit loader pins a vulnerable esbuild
+  # (GHSA-67mh-4wv8-2f99) - safe to bump since it's only used internally to
+  # load drizzle.config.ts, not part of our own code.
+  '@esbuild-kit/core-utils>esbuild': '>=0.25.0'
+  # vitest (and its own vite-node dependency) accept vite ^5 || ^6 || ^7 but
+  # pnpm resolved the oldest (vulnerable) 5.x for both - force the patched
+  # 6.x line; only affects vitest's internal vite usage, not apps/web's
+  # separate top-level vite devDependency.
+  'vitest>vite': '>=6.4.3'
+  'vite-node>vite': '>=6.4.3'
 allowBuilds:
   '@prisma/client': false
   better-sqlite3: false
