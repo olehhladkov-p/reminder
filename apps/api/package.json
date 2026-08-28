@@ -1,0 +1,36 @@
+{
+  "name": "@reminder/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "dotenv -e ../../.env -- tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "start:render": "node dist/renderStart.js",
+    "lint": "biome lint ./src",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hono/node-server": "1.19.17",
+    "@hono/zod-openapi": "0.18.4",
+    "@reminder/channels": "workspace:*",
+    "@reminder/core": "workspace:*",
+    "@reminder/db": "workspace:*",
+    "@reminder/worker": "workspace:*",
+    "better-auth": "1.7.2",
+    "drizzle-orm": "0.45.2",
+    "hono": "4.13.4",
+    "resend": "4.8.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "auth": "1.7.2",
+    "dotenv-cli": "11.0.0",
+    "tsx": "4.23.12",
+    "typescript": "5.9.3",
+    "vitest": "2.1.9"
+  }
+}

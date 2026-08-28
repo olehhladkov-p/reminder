@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1787773996399,
+      "tag": "0000_fantastic_supernaut",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787775272834,
+      "tag": "0001_tiresome_random",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787813836016,
+      "tag": "0002_add_processing_job_status",
+      "breakpoints": true
+    }
+  ]
+}

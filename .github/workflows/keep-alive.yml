@@ -1,0 +1,16 @@
+name: Keep API awake
+
+on:
+  schedule:
+    # Render's free Web Services spin down after 15 minutes with no HTTP
+    # traffic - this stays comfortably under that so reminders keep firing
+    # on time instead of waiting for a cold start.
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the API's health endpoint
+        run: curl -fsS "${{ secrets.API_HEALTH_URL }}"

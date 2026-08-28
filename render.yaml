@@ -1,0 +1,55 @@
+services:
+  # Combined API + worker - Render's free tier has no Background Worker
+  # service type, so apps/api/src/renderStart.ts runs both the Hono API and
+  # apps/worker's poll/nightly loops in this one process. See that file and
+  # apps/worker/src/run.ts for why.
+  - type: web
+    name: reminder-api
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && corepack prepare pnpm@11.24.0 --activate && pnpm install --frozen-lockfile && pnpm turbo run build --filter=@reminder/api...
+    startCommand: node apps/api/dist/renderStart.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Neon Postgres - pooled connection (same DB as local dev).
+      - key: DATABASE_URL
+        sync: false
+      - key: BETTER_AUTH_SECRET
+        sync: false
+      # Set to this service's own onrender.com URL once known (see deploy notes).
+      - key: BETTER_AUTH_URL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        sync: false
+      # The reminder-web service's onrender.com URL once known.
+      - key: WEB_APP_ORIGIN
+        sync: false
+
+  # PWA static site - free, no spin-down, backed by Render's CDN.
+  - type: web
+    name: reminder-web
+    runtime: static
+    buildCommand: corepack enable && corepack prepare pnpm@11.24.0 --activate && pnpm install --frozen-lockfile && pnpm turbo run build --filter=@reminder/web...
+    staticPublishPath: apps/web/dist
+    envVars:
+      # The reminder-api service's onrender.com URL once known.
+      - key: VITE_API_URL
+        sync: false
+      - key: VITE_VAPID_PUBLIC_KEY
+        sync: false
+    routes:
+      # Client-side routing (React Router) - unknown paths fall through to
+      # index.html instead of 404ing.
+      - type: rewrite
+        source: /*
+        destination: /index.html
