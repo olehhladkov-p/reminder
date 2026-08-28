@@ -32,15 +32,15 @@ export function createAuth(db: Db, sendMagicLink: SendMagicLink) {
       database: {
         generateId: 'uuid',
       },
-      // The PWA and API are served from separate origins in production
-      // (e.g. two distinct *.onrender.com subdomains), so the session
-      // cookie needs SameSite=None to be sent on cross-origin fetches.
-      // Secure cookies require HTTPS, which only production has - in dev
-      // the PWA and API share "localhost" as their cookie site regardless
-      // of port, so the default SameSite=Lax already works there.
-      ...(env.BETTER_AUTH_URL.startsWith('https://')
-        ? { defaultCookieAttributes: { sameSite: 'none' as const, secure: true } }
-        : {}),
+      // BETTER_AUTH_URL is set to the web app's own origin (not the API's -
+      // see render.yaml), and the web app's static site proxies /v1/* to
+      // this API service. So from the browser's point of view every auth
+      // request, including the magic-link verify redirect, is same-origin,
+      // and the default SameSite=Lax cookie works fine. A prior version of
+      // this used SameSite=None to survive being genuinely cross-origin,
+      // but Safari's Intelligent Tracking Prevention silently drops
+      // SameSite=None cookies on cross-site fetches, which broke magic-link
+      // sign-in on iOS - hence routing everything through one origin instead.
     },
     emailAndPassword: {
       enabled: false,

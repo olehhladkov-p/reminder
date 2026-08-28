@@ -18,7 +18,12 @@ services:
         sync: false
       - key: BETTER_AUTH_SECRET
         sync: false
-      # Set to this service's own onrender.com URL once known (see deploy notes).
+      # Set to the reminder-web static site's onrender.com URL, NOT this
+      # service's own URL. The web app proxies /v1/* to this service (see
+      # reminder-web's routes below), so from the browser's perspective auth
+      # is same-origin with the web app - magic-link emails and the session
+      # cookie need to match that origin, or Safari's ITP silently drops the
+      # cookie on iOS. See apps/api/src/auth.ts for details.
       - key: BETTER_AUTH_URL
         sync: false
       - key: RESEND_API_KEY
@@ -42,12 +47,24 @@ services:
     buildCommand: pnpm install --frozen-lockfile && pnpm turbo run build --filter=@reminder/web...
     staticPublishPath: apps/web/dist
     envVars:
-      # The reminder-api service's onrender.com URL once known.
-      - key: VITE_API_URL
-        sync: false
+      # VITE_API_URL is intentionally NOT set here in production - apps/web's
+      # config.ts falls back to the page's own origin, and the rewrite rule
+      # below proxies /v1/* to the API. This keeps auth same-origin from the
+      # browser's perspective (see apps/api/src/auth.ts). Only set VITE_API_URL
+      # for local dev (apps/web/.env), where the API runs on a different port.
       - key: VITE_VAPID_PUBLIC_KEY
         sync: false
     routes:
+      # Proxy API calls through this origin so the session cookie set during
+      # magic-link verification is first-party to the web app, not the API's
+      # separate onrender.com origin. Safari's ITP blocks SameSite=None
+      # cross-site cookies on fetch(), which broke magic-link sign-in on iOS
+      # when the web app called the API's origin directly. Must come before
+      # the SPA fallback rule below since Render evaluates routes in order.
+      # TODO: replace with reminder-api's actual onrender.com URL if it differs.
+      - type: rewrite
+        source: /v1/*
+        destination: https://reminder-api-3sr2.onrender.com/v1/*
       # Client-side routing (React Router) - unknown paths fall through to
       # index.html instead of 404ing.
       - type: rewrite
