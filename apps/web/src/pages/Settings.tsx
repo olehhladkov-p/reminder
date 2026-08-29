@@ -57,8 +57,8 @@ function BudgetSection() {
         {summary && subscriptions && subscriptions.length > 0 && (
           <dl className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-4">
-              <dt className="text-base text-muted-foreground">Active subscriptions cost</dt>
-              <dd className="font-medium">{eurFormatter.format(summary.activeCostEur)}</dd>
+              <dt className="text-base text-muted-foreground">Last 30 days</dt>
+              <dd className="font-medium">{eurFormatter.format(summary.last30DaysEur)}</dd>
             </div>
             <div className="flex items-center justify-between gap-4">
               <dt className="text-base text-muted-foreground">Due in the next 30 days</dt>
