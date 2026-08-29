@@ -74,7 +74,7 @@ export function Reminders() {
             <Card key={job.id}>
               <CardContent className="flex flex-col gap-2">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 flex-col gap-1">
+                  <div className="flex min-w-0 flex-col gap-1 break-words">
                     <Link
                       to={`/subscriptions/${job.subscriptionId}`}
                       className="font-medium underline hover:no-underline"

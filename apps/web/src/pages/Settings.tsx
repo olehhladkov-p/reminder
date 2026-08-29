@@ -31,8 +31,11 @@ import { enablePushNotifications, isPushSupported } from '../push/subscribe.js'
 const eurFormatter = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR' })
 
 function BudgetSection() {
-  const { data: subscriptions, loading: subsLoading, error: subsError } =
-    useResource(subscriptionsCache)
+  const {
+    data: subscriptions,
+    loading: subsLoading,
+    error: subsError,
+  } = useResource(subscriptionsCache)
   const { data: rates, loading: ratesLoading, error: ratesError } = useResource(exchangeRatesCache)
 
   const loading = subsLoading || ratesLoading
