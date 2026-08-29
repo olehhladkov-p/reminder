@@ -28,7 +28,7 @@ import { computeBudgetSummary } from '../lib/budget.js'
 import { formatFriendlyDate } from '../lib/date.js'
 import { enablePushNotifications, isPushSupported } from '../push/subscribe.js'
 
-const eurFormatter = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR' })
+const eurFormatter = new Intl.NumberFormat('en', { style: 'currency', currency: 'EUR' })
 
 function BudgetSection() {
   const {
