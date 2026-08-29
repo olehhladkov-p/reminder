@@ -27,21 +27,36 @@ const migrationsFolder = path.join(
 
 export interface FakeChannel extends NotificationChannel {
   sent: { payload: ReminderPayload; target: unknown }[]
+  sentDigests: { payloads: ReminderPayload[]; target: unknown }[]
   /** Tests overwrite this to script success/failure/throw for the next send(s). */
   sendImpl: (payload: ReminderPayload, target: unknown) => Promise<DeliveryResult>
+  /** Tests overwrite this to script success/failure/throw for the next sendDigest(s). */
+  sendDigestImpl: (payloads: ReminderPayload[], target: unknown) => Promise<DeliveryResult>
 }
 
 function fakeChannel(type: ChannelType, real: NotificationChannel): FakeChannel {
   const sent: FakeChannel['sent'] = []
+  const sentDigests: FakeChannel['sentDigests'] = []
   const channel: FakeChannel = {
     type,
     sent,
+    sentDigests,
     validateTarget: (target) => real.validateTarget(target),
     sendImpl: async () => ({ ok: true, providerMessageId: 'fake-message-id' }),
+    sendDigestImpl: async () => ({ ok: true, providerMessageId: 'fake-digest-message-id' }),
     async send(payload, target) {
       sent.push({ payload, target })
       return channel.sendImpl(payload, target)
     },
+  }
+  // Mirror the real channel's digest support - a channel that doesn't
+  // implement sendDigest in production shouldn't gain it in tests, since
+  // that's what makes the dispatch fallback-to-per-job path exercisable.
+  if (real.sendDigest) {
+    channel.sendDigest = async (payloads, target) => {
+      sentDigests.push({ payloads, target })
+      return channel.sendDigestImpl(payloads, target)
+    }
   }
   return channel
 }

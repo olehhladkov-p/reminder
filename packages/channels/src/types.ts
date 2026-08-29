@@ -30,4 +30,10 @@ export interface NotificationChannel<Target = unknown> {
   type: ChannelType
   validateTarget(target: unknown): Result<Target>
   send(payload: ReminderPayload, target: Target): Promise<DeliveryResult>
+  /**
+   * Optional: combine several reminders due for the same target at the same
+   * instant into a single provider call. Channels that don't implement this
+   * fall back to one send() per reminder - see apps/worker/src/dispatch.ts.
+   */
+  sendDigest?(payloads: ReminderPayload[], target: Target): Promise<DeliveryResult>
 }
