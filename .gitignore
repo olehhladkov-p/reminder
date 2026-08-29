@@ -18,6 +18,7 @@ dev-dist/
 *.pfx
 .vscode/
 .idea/
+scratch-*
 Thumbs.db
 desktop.ini
 
