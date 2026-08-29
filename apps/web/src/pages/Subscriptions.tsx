@@ -1,5 +1,5 @@
 import type { Subscription } from '@reminder/core'
-import { Plus } from 'lucide-react'
+import { MoreVertical, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -18,7 +18,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog.js'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu.js'
 import { formatFriendlyDate } from '../lib/date.js'
+
+const cycleLabels: Record<Subscription['cycle'], string> = {
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  yearly: 'Yearly',
+  custom_days: 'Custom',
+}
 
 function formatPrice(sub: Subscription): string | null {
   if (sub.priceCents === null) return null
@@ -26,29 +40,32 @@ function formatPrice(sub: Subscription): string | null {
   return sub.currency ? `${amount} ${sub.currency}` : amount
 }
 
+function formatCycle(sub: Subscription): string {
+  if (sub.cycle === 'custom_days' && sub.intervalDays) {
+    return `Every ${sub.intervalDays} day${sub.intervalDays === 1 ? '' : 's'}`
+  }
+  return cycleLabels[sub.cycle]
+}
+
 export function Subscriptions() {
   const { data: subscriptions, loading, error } = useResource(subscriptionsCache)
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Subscription | null>(null)
 
-  async function runAction(id: string, action: () => Promise<unknown>, successMessage?: string) {
-    setPendingId(id)
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    const sub = deleteTarget
+    setDeleteTarget(null)
+    setPendingId(sub.id)
     try {
-      await action()
+      await api.subscriptions.remove(sub.id)
       await Promise.all([subscriptionsCache.refresh(), remindersCache.refresh()])
-      if (successMessage) toast.success(successMessage)
+      toast.success(`Deleted "${sub.name}".`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Something went wrong.')
     } finally {
       setPendingId(null)
     }
-  }
-
-  async function confirmDelete() {
-    if (!deleteTarget) return
-    const sub = deleteTarget
-    setDeleteTarget(null)
-    await runAction(sub.id, () => api.subscriptions.remove(sub.id), `Deleted "${sub.name}".`)
   }
 
   return (
@@ -83,64 +100,38 @@ export function Subscriptions() {
           return (
             <Card key={sub.id}>
               <CardContent className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex min-w-0 flex-col gap-1">
+                <div className="flex min-w-0 flex-col gap-2">
                   <Link
                     to={`/subscriptions/${sub.id}`}
                     className="font-medium underline hover:no-underline"
                   >
                     {sub.name}
                   </Link>
-                  <p className="text-sm text-muted-foreground">
-                    Renews on {formatFriendlyDate(sub.nextRenewalDate)}
-                    {price ? ` · ${price}` : ''}
-                  </p>
-                  {sub.status !== 'active' && (
-                    <Badge variant="secondary" className="w-fit capitalize">
-                      {sub.status}
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge variant="secondary">
+                      Renews {formatFriendlyDate(sub.nextRenewalDate)}
                     </Badge>
-                  )}
+                    {price && <Badge variant="secondary">{price}</Badge>}
+                    <Badge variant="outline">{formatCycle(sub)}</Badge>
+                    {sub.status !== 'active' && (
+                      <Badge variant="secondary" className="capitalize">
+                        {sub.status}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {sub.status === 'active' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={busy}
-                      onClick={() => runAction(sub.id, () => api.subscriptions.pause(sub.id))}
-                    >
-                      Pause
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" disabled={busy} aria-label="More actions">
+                      <MoreVertical />
                     </Button>
-                  )}
-                  {sub.status === 'paused' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={busy}
-                      onClick={() => runAction(sub.id, () => api.subscriptions.resume(sub.id))}
-                    >
-                      Resume
-                    </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={busy}
-                    onClick={() =>
-                      runAction(sub.id, () => api.subscriptions.renew(sub.id), 'Renewed.')
-                    }
-                  >
-                    Renew
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                    disabled={busy}
-                    onClick={() => setDeleteTarget(sub)}
-                  >
-                    Delete
-                  </Button>
-                </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(sub)}>
+                      <Trash2 /> Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </CardContent>
             </Card>
           )

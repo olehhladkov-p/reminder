@@ -2,7 +2,13 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { api } from '../api/client.js'
 import { useResource } from '../api/resourceCache.js'
-import { meCache, remindersCache, resetAllCaches } from '../api/resources.js'
+import {
+  exchangeRatesCache,
+  meCache,
+  remindersCache,
+  resetAllCaches,
+  subscriptionsCache,
+} from '../api/resources.js'
 import { authClient } from '../auth/authClient.js'
 import { FormSkeleton } from '../components/skeletons.js'
 import { Button } from '../components/ui/button.js'
@@ -18,7 +24,56 @@ import {
 import { Input } from '../components/ui/input.js'
 import { Label } from '../components/ui/label.js'
 import { Skeleton } from '../components/ui/skeleton.js'
+import { computeBudgetSummary } from '../lib/budget.js'
+import { formatFriendlyDate } from '../lib/date.js'
 import { enablePushNotifications, isPushSupported } from '../push/subscribe.js'
+
+const eurFormatter = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR' })
+
+function BudgetSection() {
+  const { data: subscriptions, loading: subsLoading, error: subsError } =
+    useResource(subscriptionsCache)
+  const { data: rates, loading: ratesLoading, error: ratesError } = useResource(exchangeRatesCache)
+
+  const loading = subsLoading || ratesLoading
+  const error = ratesError ?? subsError
+  const summary = subscriptions && rates ? computeBudgetSummary(subscriptions, rates) : null
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Budget</CardTitle>
+        <CardDescription>Estimated in EUR using live exchange rates.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {loading && <FormSkeleton fields={3} />}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        {!loading && !error && subscriptions?.length === 0 && (
+          <p className="text-sm text-muted-foreground">Add a subscription to see your budget.</p>
+        )}
+        {summary && subscriptions && subscriptions.length > 0 && (
+          <dl className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-4">
+              <dt className="text-sm text-muted-foreground">Active subscriptions cost</dt>
+              <dd className="font-medium">{eurFormatter.format(summary.activeCostEur)}</dd>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <dt className="text-sm text-muted-foreground">Due in the next 30 days</dt>
+              <dd className="font-medium">{eurFormatter.format(summary.upcomingMonthEur)}</dd>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <dt className="text-sm text-muted-foreground">
+                Total spent since{' '}
+                {summary.periodStart ? formatFriendlyDate(summary.periodStart) : '—'}
+              </dt>
+              <dd className="font-medium">{eurFormatter.format(summary.totalSinceStartEur)}</dd>
+            </div>
+          </dl>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
 
 function detectedTimezone(): string | null {
   try {
@@ -157,6 +212,8 @@ export function Settings() {
           )}
         </CardContent>
       </Card>
+
+      <BudgetSection />
 
       {notificationPermission !== null && (
         <Card>

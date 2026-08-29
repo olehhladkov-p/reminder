@@ -125,53 +125,29 @@ describe('subscriptions routes', () => {
     expect(body.anchorDay).toBe(31)
   })
 
-  it('renew rolls next_renewal_date forward and re-materializes without touching sent jobs', async () => {
-    const cookie = await signIn(testApp, 'a@example.com')
-    const sub = (await (
-      await post('/v1/subscriptions', cookie, {
-        name: 'Sub',
-        nextRenewalDate: '2027-01-15',
-        leadDays: [7],
-      })
-    ).json()) as any
-    await post('/v1/channels', cookie, { type: 'email', target: { email: 'a@example.com' } })
-
-    const before = (await (
-      await testApp.app.request('/v1/reminders/upcoming', { headers: { cookie } })
-    ).json()) as any
-    // The pre-booked 2027-02-15 occurrence (horizon=2) stays hidden until it's next.
-    expect(new Set(before.map((j: { occurrenceDate: string }) => j.occurrenceDate))).toEqual(
-      new Set(['2027-01-15']),
-    )
-
-    const renewRes = await post(`/v1/subscriptions/${sub.id}/renew`, cookie)
-    expect(renewRes.status).toBe(200)
-    const renewed = (await renewRes.json()) as any
-    expect(renewed.nextRenewalDate).toBe('2027-02-15')
-
-    const after = (await (
-      await testApp.app.request('/v1/reminders/upcoming', { headers: { cookie } })
-    ).json()) as any
-    expect(new Set(after.map((j: { occurrenceDate: string }) => j.occurrenceDate))).toEqual(
-      new Set(['2027-02-15']),
-    )
-  })
-
-  it('pause deletes pending jobs and skips materialization; resume regenerates them', async () => {
+  it('status can be set to paused via PATCH, which deletes pending jobs; active regenerates them', async () => {
     const cookie = await signIn(testApp, 'a@example.com')
     const sub = (await (
       await post('/v1/subscriptions', cookie, { name: 'Sub', nextRenewalDate: '2027-06-01' })
     ).json()) as any
     await post('/v1/channels', cookie, { type: 'email', target: { email: 'a@example.com' } })
 
-    const pauseRes = await post(`/v1/subscriptions/${sub.id}/pause`, cookie)
+    const pauseRes = await testApp.app.request(`/v1/subscriptions/${sub.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', cookie },
+      body: JSON.stringify({ status: 'paused' }),
+    })
     expect(((await pauseRes.json()) as any).status).toBe('paused')
     const afterPause = (await (
       await testApp.app.request('/v1/reminders/upcoming', { headers: { cookie } })
     ).json()) as any
     expect(afterPause).toHaveLength(0)
 
-    const resumeRes = await post(`/v1/subscriptions/${sub.id}/resume`, cookie)
+    const resumeRes = await testApp.app.request(`/v1/subscriptions/${sub.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', cookie },
+      body: JSON.stringify({ status: 'active' }),
+    })
     expect(((await resumeRes.json()) as any).status).toBe('active')
     const afterResume = (await (
       await testApp.app.request('/v1/reminders/upcoming', { headers: { cookie } })

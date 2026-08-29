@@ -86,12 +86,6 @@ export const api = {
       call(`/v1/subscriptions/${id}`, subscriptionSchema, { method: 'PATCH', body }),
     remove: (id: string): Promise<void> =>
       callVoid(`/v1/subscriptions/${id}`, { method: 'DELETE' }),
-    renew: (id: string): Promise<Subscription> =>
-      call(`/v1/subscriptions/${id}/renew`, subscriptionSchema, { method: 'POST' }),
-    pause: (id: string): Promise<Subscription> =>
-      call(`/v1/subscriptions/${id}/pause`, subscriptionSchema, { method: 'POST' }),
-    resume: (id: string): Promise<Subscription> =>
-      call(`/v1/subscriptions/${id}/resume`, subscriptionSchema, { method: 'POST' }),
   },
   channels: {
     list: (): Promise<ChannelConfig[]> => call('/v1/channels', z.array(channelConfigSchema)),

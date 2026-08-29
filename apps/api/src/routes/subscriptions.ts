@@ -1,8 +1,6 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import {
-  advance,
   createSubscriptionSchema,
-  formatIsoDate,
   normalizeLeadDays,
   parseIsoDate,
   subscriptionSchema,
@@ -197,74 +195,6 @@ export function createSubscriptionRoutes(deps: AppDeps) {
     await db.delete(schema.subscriptions).where(eq(schema.subscriptions.id, id))
     return c.body(null, 204)
   })
-
-  const renewRoute = createRoute({
-    method: 'post',
-    path: '/v1/subscriptions/{id}/renew',
-    request: { params: idParams },
-    responses: {
-      200: {
-        content: { 'application/json': { schema: subscriptionSchema } },
-        description: 'Rolled forward one cycle',
-      },
-    },
-  })
-
-  subscriptionRoutes.openapi(renewRoute, async (c) => {
-    const { id } = c.req.valid('param')
-    const userId = c.get('userId')
-    const existing = await findOwned(id, userId)
-
-    const nextDate = advance(parseIsoDate(existing.nextRenewalDate), existing.cycle, {
-      anchorDay: existing.anchorDay,
-      intervalDays: existing.intervalDays,
-    })
-
-    const [row] = await db
-      .update(schema.subscriptions)
-      .set({ nextRenewalDate: formatIsoDate(nextDate) })
-      .where(eq(schema.subscriptions.id, id))
-      .returning()
-    if (!row) throw new HTTPException(500, { message: 'renew failed' })
-
-    // reconcileSubscriptionJobs deletes pending jobs and regenerates from the
-    // new date; jobs already `sent` are untouched.
-    await reconcileSubscriptionJobs(db, id)
-    return c.json(toSubscriptionDto(row), 200)
-  })
-
-  function statusChangeRoute(action: 'pause' | 'resume', targetStatus: 'paused' | 'active') {
-    const route = createRoute({
-      method: 'post',
-      path: `/v1/subscriptions/{id}/${action}`,
-      request: { params: idParams },
-      responses: {
-        200: {
-          content: { 'application/json': { schema: subscriptionSchema } },
-          description: `Subscription ${targetStatus}`,
-        },
-      },
-    })
-
-    subscriptionRoutes.openapi(route, async (c) => {
-      const { id } = c.req.valid('param')
-      const userId = c.get('userId')
-      await findOwned(id, userId)
-
-      const [row] = await db
-        .update(schema.subscriptions)
-        .set({ status: targetStatus })
-        .where(eq(schema.subscriptions.id, id))
-        .returning()
-      if (!row) throw new HTTPException(500, { message: `${action} failed` })
-
-      await reconcileSubscriptionJobs(db, id)
-      return c.json(toSubscriptionDto(row), 200)
-    })
-  }
-
-  statusChangeRoute('pause', 'paused')
-  statusChangeRoute('resume', 'active')
 
   return subscriptionRoutes
 }
