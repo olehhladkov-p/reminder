@@ -1,5 +1,5 @@
-import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { Slot as SlotPrimitive } from 'radix-ui'
 import type * as React from 'react'
 import { cn } from '@/lib/utils.js'
 
@@ -40,7 +40,7 @@ function Button({
   asChild = false,
   ...props
 }: React.ComponentProps<'button'> & VariantProps<typeof buttonVariants> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot : 'button'
+  const Comp = asChild ? SlotPrimitive.Root : 'button'
   return (
     <Comp
       data-slot="button"
