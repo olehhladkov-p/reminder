@@ -102,16 +102,14 @@ export function Reminders() {
         {reminderGroups.map((group) => (
           <Card key={group.key}>
             <CardContent className="flex flex-col gap-2">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 flex-col gap-1 break-words">
-                  <Link
-                    to={`/subscriptions/${group.subscriptionId}`}
-                    className="font-medium underline hover:no-underline"
-                  >
-                    {nameById.get(group.subscriptionId) ?? 'Subscription'}
-                  </Link>
-                </div>
-                <Badge>Reminder at {formatFriendlyDateTime(group.sendAt)}</Badge>
+              <div className="flex flex-col gap-2">
+                <Link
+                  to={`/subscriptions/${group.subscriptionId}`}
+                  className="font-medium underline hover:no-underline"
+                >
+                  {nameById.get(group.subscriptionId) ?? 'Subscription'}
+                </Link>
+                <Badge>Reminder on {formatFriendlyDateTime(group.sendAt)}</Badge>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">
