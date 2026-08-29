@@ -27,7 +27,7 @@ export function SubscriptionEdit() {
       <Card>
         <CardContent>
           {loading && <FormSkeleton fields={7} />}
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-base text-destructive">{error}</p>}
           {subscription && id && (
             <SubscriptionForm
               initialValues={subscriptionToFormValues(subscription)}

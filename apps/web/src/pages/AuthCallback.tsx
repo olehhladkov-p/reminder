@@ -25,7 +25,7 @@ export function AuthCallback() {
             <CardTitle className="text-xl">Sign-in failed</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               {searchParams.get('error_description') ?? 'That link is invalid or expired.'}
             </p>
             <Button asChild variant="secondary">

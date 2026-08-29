@@ -72,7 +72,7 @@ export function Channels() {
       <h1 className="text-2xl font-semibold tracking-tight">Channels</h1>
 
       {loading && <ListSkeleton count={2} />}
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-base text-destructive">{error}</p>}
 
       <div className="flex flex-col gap-3">
         {channels?.map((channel) => {
@@ -120,7 +120,7 @@ export function Channels() {
         </CardHeader>
         <CardContent>
           <form className="flex flex-col gap-4" onSubmit={addEmailChannel}>
-            {formError && <p className="text-sm text-destructive">{formError}</p>}
+            {formError && <p className="text-base text-destructive">{formError}</p>}
             <div className="flex flex-col gap-2">
               <Label htmlFor="channel-email">Email address</Label>
               <Input

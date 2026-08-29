@@ -223,7 +223,7 @@ export function SubscriptionForm({
           value={values.leadDays}
           onChange={(e) => set('leadDays', e.target.value)}
         />
-        <p className="text-xs text-muted-foreground">Comma-separated days before renewal.</p>
+        <p className="text-sm text-muted-foreground">Comma-separated days before renewal.</p>
       </div>
 
       <div className="flex flex-col gap-2">

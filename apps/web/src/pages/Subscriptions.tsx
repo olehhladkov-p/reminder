@@ -80,11 +80,11 @@ export function Subscriptions() {
       </header>
 
       {loading && <ListSkeleton />}
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-base text-destructive">{error}</p>}
 
       {subscriptions && subscriptions.length === 0 && (
         <div className="flex flex-col items-center gap-3 py-10 text-center">
-          <p className="text-sm text-muted-foreground">No subscriptions yet.</p>
+          <p className="text-base text-muted-foreground">No subscriptions yet.</p>
           <Button asChild size="lg">
             <Link to="/subscriptions/new">
               <Plus /> Add your first subscription
@@ -98,41 +98,45 @@ export function Subscriptions() {
           const price = formatPrice(sub)
           const busy = pendingId === sub.id
           return (
-            <Card key={sub.id}>
-              <CardContent className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex min-w-0 flex-col gap-2">
-                  <Link
-                    to={`/subscriptions/${sub.id}`}
-                    className="font-medium underline hover:no-underline"
-                  >
-                    {sub.name}
-                  </Link>
-                  <div className="flex flex-wrap gap-1.5">
-                    <Badge variant="secondary">
-                      Renews {formatFriendlyDate(sub.nextRenewalDate)}
+            <Card key={sub.id} className="relative">
+              <CardContent className="flex min-w-0 flex-col gap-2 pr-14">
+                <Link
+                  to={`/subscriptions/${sub.id}`}
+                  className="font-medium underline hover:no-underline"
+                >
+                  {sub.name}
+                </Link>
+                <div className="flex flex-wrap gap-1.5">
+                  <Badge variant="secondary">
+                    Renews {formatFriendlyDate(sub.nextRenewalDate)}
+                  </Badge>
+                  {price && <Badge variant="secondary">{price}</Badge>}
+                  <Badge variant="outline">{formatCycle(sub)}</Badge>
+                  {sub.status !== 'active' && (
+                    <Badge variant="secondary" className="capitalize">
+                      {sub.status}
                     </Badge>
-                    {price && <Badge variant="secondary">{price}</Badge>}
-                    <Badge variant="outline">{formatCycle(sub)}</Badge>
-                    {sub.status !== 'active' && (
-                      <Badge variant="secondary" className="capitalize">
-                        {sub.status}
-                      </Badge>
-                    )}
-                  </div>
+                  )}
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" disabled={busy} aria-label="More actions">
-                      <MoreVertical />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(sub)}>
-                      <Trash2 /> Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </CardContent>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={busy}
+                    aria-label="More actions"
+                    className="absolute top-3 right-3"
+                  >
+                    <MoreVertical />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(sub)}>
+                    <Trash2 /> Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </Card>
           )
         })}

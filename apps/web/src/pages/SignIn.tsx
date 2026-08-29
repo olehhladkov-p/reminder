@@ -49,8 +49,8 @@ export function SignIn() {
         <CardContent>
           {status.kind === 'sent' ? (
             <div className="flex flex-col items-center gap-3 text-center">
-              <p className="text-sm font-medium">Check your email</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-base font-medium">Check your email</p>
+              <p className="text-base text-muted-foreground">
                 We sent a sign-in link to {email}. Open it on this device to continue.
               </p>
               <Button variant="link" onClick={() => setStatus({ kind: 'idle' })}>
@@ -60,7 +60,7 @@ export function SignIn() {
           ) : (
             <form className="flex flex-col gap-4" onSubmit={sendMagicLink}>
               {status.kind === 'error' && (
-                <p className="text-sm text-destructive">{status.message}</p>
+                <p className="text-base text-destructive">{status.message}</p>
               )}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="email">Email</Label>

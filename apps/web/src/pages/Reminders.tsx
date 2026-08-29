@@ -56,10 +56,10 @@ export function Reminders() {
       </header>
 
       {jobsLoading && <ListSkeleton />}
-      {jobsError && <p className="text-sm text-destructive">{jobsError}</p>}
+      {jobsError && <p className="text-base text-destructive">{jobsError}</p>}
       {jobs && jobs.length === 0 && (
         <div className="flex flex-col items-center gap-3 py-10 text-center">
-          <p className="text-sm text-muted-foreground">No reminders scheduled.</p>
+          <p className="text-base text-muted-foreground">No reminders scheduled.</p>
           <Button size="lg" onClick={handleNewReminder}>
             <Plus /> Add a reminder
           </Button>

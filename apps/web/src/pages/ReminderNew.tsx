@@ -136,7 +136,7 @@ function PickReminderForm({
       <h1 className="text-2xl font-semibold tracking-tight">New reminder</h1>
 
       {!hasEnabledChannel && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           You don't have an enabled notification channel yet - add one in{' '}
           <Button variant="link" className="h-auto p-0" onClick={() => navigate('/channels')}>
             Channels
@@ -148,7 +148,7 @@ function PickReminderForm({
       <Card>
         <CardContent>
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-base text-destructive">{error}</p>}
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="subscription">Subscription</Label>

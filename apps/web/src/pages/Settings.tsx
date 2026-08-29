@@ -50,22 +50,22 @@ function BudgetSection() {
       </CardHeader>
       <CardContent>
         {loading && <FormSkeleton fields={3} />}
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p className="text-base text-destructive">{error}</p>}
         {!loading && !error && subscriptions?.length === 0 && (
-          <p className="text-sm text-muted-foreground">Add a subscription to see your budget.</p>
+          <p className="text-base text-muted-foreground">Add a subscription to see your budget.</p>
         )}
         {summary && subscriptions && subscriptions.length > 0 && (
           <dl className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-4">
-              <dt className="text-sm text-muted-foreground">Active subscriptions cost</dt>
+              <dt className="text-base text-muted-foreground">Active subscriptions cost</dt>
               <dd className="font-medium">{eurFormatter.format(summary.activeCostEur)}</dd>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <dt className="text-sm text-muted-foreground">Due in the next 30 days</dt>
+              <dt className="text-base text-muted-foreground">Due in the next 30 days</dt>
               <dd className="font-medium">{eurFormatter.format(summary.upcomingMonthEur)}</dd>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <dt className="text-sm text-muted-foreground">
+              <dt className="text-base text-muted-foreground">
                 Total spent since{' '}
                 {summary.periodStart ? formatFriendlyDate(summary.periodStart) : '—'}
               </dt>
@@ -159,13 +159,13 @@ export function Settings() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
         {user ? (
-          <p className="text-sm text-muted-foreground">Signed in as {user.email}.</p>
+          <p className="text-base text-muted-foreground">Signed in as {user.email}.</p>
         ) : (
           <Skeleton className="mt-1 h-4 w-48" />
         )}
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-base text-destructive">{error}</p>}
 
       <Card>
         <CardContent>
@@ -203,7 +203,7 @@ export function Settings() {
                   value={defaultLeadDays}
                   onChange={(e) => setDefaultLeadDays(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   Comma-separated days before renewal.
                 </p>
               </div>

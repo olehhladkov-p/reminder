@@ -12,10 +12,10 @@ const navItems = [
 export function AppLayout() {
   return (
     <div className="flex min-h-svh flex-col bg-muted/30">
-      <main className="mx-auto w-full max-w-lg flex-1 px-4 pt-6 pb-24">
+      <main className="mx-auto w-full max-w-lg flex-1 px-4 pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))]">
         <Outlet />
       </main>
-      <nav className="fixed inset-x-0 bottom-0 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
+      <nav className="fixed inset-x-0 bottom-0 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-backdrop-filter:bg-background/80">
         <div className="mx-auto flex max-w-lg">
           {navItems.map((item) => (
             <NavLink
@@ -24,7 +24,7 @@ export function AppLayout() {
               end={item.end}
               className={({ isActive }) =>
                 cn(
-                  'flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium text-muted-foreground transition-colors',
+                  'flex min-h-11 flex-1 flex-col items-center justify-center gap-1 py-2.5 text-sm font-medium text-muted-foreground transition-colors',
                   isActive && 'text-primary',
                 )
               }
