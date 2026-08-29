@@ -1,0 +1,4 @@
+pre-push:
+  jobs:
+    - name: biome
+      run: pnpm exec biome ci .
