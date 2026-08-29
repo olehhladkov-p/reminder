@@ -1,4 +1,4 @@
-import type { ChannelType } from '@reminder/core'
+import type { ChannelType, NotificationJob } from '@reminder/core'
 import type { LucideIcon } from 'lucide-react'
 import { Mail, MessageCircle, Plus, Smartphone, Webhook } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -27,6 +27,37 @@ const channelIcons: Record<ChannelType, LucideIcon> = {
   webhook: Webhook,
 }
 
+interface ReminderGroup {
+  key: string
+  subscriptionId: string
+  kind: NotificationJob['kind']
+  occurrenceDate: string
+  sendAt: Date
+  channelIds: string[]
+}
+
+/** Jobs only differ per notification channel - one reminder, not one card per channel. */
+function groupJobsByReminder(jobs: readonly NotificationJob[]): ReminderGroup[] {
+  const groups = new Map<string, ReminderGroup>()
+  for (const job of jobs) {
+    const key = `${job.subscriptionId}:${job.kind}:${job.occurrenceDate}:${job.leadDays}`
+    const existing = groups.get(key)
+    if (existing) {
+      if (!existing.channelIds.includes(job.channelId)) existing.channelIds.push(job.channelId)
+    } else {
+      groups.set(key, {
+        key,
+        subscriptionId: job.subscriptionId,
+        kind: job.kind,
+        occurrenceDate: job.occurrenceDate,
+        sendAt: job.sendAt,
+        channelIds: [job.channelId],
+      })
+    }
+  }
+  return [...groups.values()]
+}
+
 export function Reminders() {
   const navigate = useNavigate()
   const { data: jobs, loading: jobsLoading, error: jobsError } = useResource(remindersCache)
@@ -35,6 +66,7 @@ export function Reminders() {
 
   const nameById = new Map(subscriptions?.map((sub) => [sub.id, sub.name]))
   const channelById = new Map(channels?.map((channel) => [channel.id, channel]))
+  const reminderGroups = jobs ? groupJobsByReminder(jobs) : []
 
   function handleNewReminder() {
     if ((subscriptions?.length ?? 0) === 0) {
@@ -67,37 +99,38 @@ export function Reminders() {
       )}
 
       <div className="flex flex-col gap-3">
-        {jobs?.map((job) => {
-          const channel = channelById.get(job.channelId)
-          const ChannelIcon = channel ? channelIcons[channel.type] : null
-          return (
-            <Card key={job.id}>
-              <CardContent className="flex flex-col gap-2">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 flex-col gap-1 break-words">
-                    <Link
-                      to={`/subscriptions/${job.subscriptionId}`}
-                      className="font-medium underline hover:no-underline"
-                    >
-                      {nameById.get(job.subscriptionId) ?? 'Subscription'}
-                    </Link>
-                  </div>
-                  <Badge>Reminder at {formatFriendlyDateTime(job.sendAt)}</Badge>
+        {reminderGroups.map((group) => (
+          <Card key={group.key}>
+            <CardContent className="flex flex-col gap-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 flex-col gap-1 break-words">
+                  <Link
+                    to={`/subscriptions/${group.subscriptionId}`}
+                    className="font-medium underline hover:no-underline"
+                  >
+                    {nameById.get(group.subscriptionId) ?? 'Subscription'}
+                  </Link>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">
-                    {kindLabels[job.kind]} on {formatFriendlyDate(job.occurrenceDate)}
-                  </Badge>
-                  {channel && ChannelIcon && (
-                    <Badge variant="outline">
+                <Badge>Reminder at {formatFriendlyDateTime(group.sendAt)}</Badge>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline">
+                  {kindLabels[group.kind]} on {formatFriendlyDate(group.occurrenceDate)}
+                </Badge>
+                {group.channelIds.map((channelId) => {
+                  const channel = channelById.get(channelId)
+                  if (!channel) return null
+                  const ChannelIcon = channelIcons[channel.type]
+                  return (
+                    <Badge key={channelId} variant="outline">
                       <ChannelIcon /> {channelLabels[channel.type]}
                     </Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   )
