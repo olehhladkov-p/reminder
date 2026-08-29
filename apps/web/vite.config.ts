@@ -21,6 +21,7 @@ export default defineConfig({
       },
       devOptions: { enabled: true, type: 'module' },
       manifest: {
+        id: '/',
         name: 'Subscription Reminder',
         short_name: 'Reminders',
         description: 'Track subscriptions and get renewal reminders.',
@@ -28,9 +29,12 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
+        scope: '/',
+        lang: 'en',
+        categories: ['finance', 'productivity', 'utilities'],
         icons: [
-          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
           {
             src: 'icon-512-maskable.png',
             sizes: '512x512',
