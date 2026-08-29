@@ -79,15 +79,13 @@ export function Channels() {
           const busy = pendingId === channel.id
           return (
             <Card key={channel.id}>
-              <CardContent className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex min-w-0 flex-col gap-1">
-                  <p className="font-medium">{describeTarget(channel)}</p>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={channel.verifiedAt ? 'default' : 'secondary'}>
-                      {channel.verifiedAt ? 'Verified' : 'Not verified'}
-                    </Badge>
-                    {!channel.enabled && <Badge variant="outline">Disabled</Badge>}
-                  </div>
+              <CardContent className="flex flex-col gap-2">
+                <p className="min-w-0 truncate font-medium">{describeTarget(channel)}</p>
+                <div className="flex items-center gap-2">
+                  <Badge variant={channel.verifiedAt ? 'default' : 'secondary'}>
+                    {channel.verifiedAt ? 'Verified' : 'Not verified'}
+                  </Badge>
+                  {!channel.enabled && <Badge variant="outline">Disabled</Badge>}
                 </div>
                 <div className="flex gap-2">
                   <Button
