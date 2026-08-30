@@ -1,0 +1,8 @@
+Add update notification toast and service worker update flow
+
+- sw: handle SKIP_WAITING message and claim clients on activate
+- sw-registration: register SW and dispatch sw:update event when an update is found
+- UpdateToast: UI component with Refresh button to activate new SW and reload
+- main: mount UpdateToast and import sw-registration
+
+Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>

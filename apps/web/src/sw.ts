@@ -49,4 +49,15 @@ self.addEventListener('notificationclick', (event) => {
   )
 })
 
-self.skipWaiting()
+self.addEventListener('message', (event) => {
+  // Allow the page to ask the waiting SW to skip waiting and become active.
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+})
+
+self.addEventListener('activate', (event) => {
+  // Take control of uncontrolled clients as soon as the SW activates so the
+  // newly-active service worker controls pages without them needing a reload.
+  event.waitUntil(self.clients.claim())
+})
