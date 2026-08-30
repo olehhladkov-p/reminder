@@ -2,13 +2,9 @@ import { renderEmailLayout } from '@reminder/channels'
 import { Resend } from 'resend'
 import { env } from './env.js'
 
+const resend = new Resend(env.RESEND_API_KEY)
+
 export async function sendMagicLinkEmail(email: string, url: string): Promise<void> {
-  if (!env.RESEND_API_KEY || !env.RESEND_FROM_EMAIL) {
-    throw new Error(
-      'sendMagicLinkEmail: RESEND_API_KEY/RESEND_FROM_EMAIL are not set. Set DEV_LOG_MAGIC_LINK=true for local development instead.',
-    )
-  }
-  const resend = new Resend(env.RESEND_API_KEY)
   const { error } = await resend.emails.send({
     from: `Subscription Reminder <${env.RESEND_FROM_EMAIL}>`,
     to: email,

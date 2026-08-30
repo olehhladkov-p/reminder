@@ -17,9 +17,14 @@ services:
       # Environments on this Blueprint, open this var in the reminder-api
       # service's Environment tab and give it a separate preview value of
       # `true` - that makes preview deploys log magic-link URLs to the
-      # service logs instead of sending real email through Resend, so
-      # previews don't need Resend credentials at all. See
-      # apps/api/src/env.ts and apps/api/src/magicLinkEmail.ts.
+      # service logs instead of sending real email through Resend. Note this
+      # only covers magic-link auth: RESEND_API_KEY/RESEND_FROM_EMAIL below
+      # still need some non-empty value even so, since channels.ts builds the
+      # (separate) reminder-notification email channel eagerly at startup and
+      # the Resend SDK throws if the key is empty - a placeholder key is fine
+      # for previews since that code path won't be exercised by sign-in
+      # testing. See apps/api/src/env.ts, apps/api/src/magicLinkEmail.ts, and
+      # apps/api/src/channels.ts.
       - key: DEV_LOG_MAGIC_LINK
         value: false
       # Neon Postgres - pooled connection (same DB as local dev).
