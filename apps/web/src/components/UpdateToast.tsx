@@ -37,7 +37,9 @@ export function UpdateToast() {
       } catch (_err) {
         // Fallback: attempt to call skipWaiting directly on the worker instance
         try {
-          const maybeSkip = (registration.waiting as unknown as { skipWaiting?: () => Promise<void> })?.skipWaiting
+          const maybeSkip = (
+            registration.waiting as unknown as { skipWaiting?: () => Promise<void> }
+          )?.skipWaiting
           if (typeof maybeSkip === 'function') {
             await maybeSkip.call(registration.waiting)
           }
