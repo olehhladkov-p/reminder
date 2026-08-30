@@ -11,6 +11,7 @@ import {
 import { FormSkeleton } from '../components/skeletons.js'
 import { Card, CardContent } from '../components/ui/card.js'
 import { useApiData } from '../hooks/useApiData.js'
+import { cn } from '../lib/utils.js'
 
 export function SubscriptionEdit() {
   const { id } = useParams<{ id: string }>()
@@ -26,20 +27,27 @@ export function SubscriptionEdit() {
       <h1 className="text-2xl font-semibold tracking-tight">Edit subscription</h1>
       <Card>
         <CardContent>
-          {loading && <FormSkeleton fields={7} />}
+          {loading && !subscription && <FormSkeleton fields={7} />}
           {error && <p className="text-base text-destructive">{error}</p>}
           {subscription && id && (
-            <SubscriptionForm
-              initialValues={subscriptionToFormValues(subscription)}
-              submitLabel="Save"
-              onCancel={() => navigate('/')}
-              onSubmit={async (values) => {
-                await api.subscriptions.update(id, formValuesToInput(values))
-                await Promise.all([subscriptionsCache.refresh(), remindersCache.refresh()])
-                toast.success('Saved.')
-                navigate('/')
-              }}
-            />
+            <div
+              className={cn(
+                loading && 'skeleton-shimmer pointer-events-none rounded-md opacity-60',
+              )}
+              aria-busy={loading || undefined}
+            >
+              <SubscriptionForm
+                initialValues={subscriptionToFormValues(subscription)}
+                submitLabel="Save"
+                onCancel={() => navigate('/')}
+                onSubmit={async (values) => {
+                  await api.subscriptions.update(id, formValuesToInput(values))
+                  await Promise.all([subscriptionsCache.refresh(), remindersCache.refresh()])
+                  toast.success('Saved.')
+                  navigate('/')
+                }}
+              />
+            </div>
           )}
         </CardContent>
       </Card>

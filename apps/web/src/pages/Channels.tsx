@@ -10,6 +10,7 @@ import { Button } from '../components/ui/button.js'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card.js'
 import { Input } from '../components/ui/input.js'
 import { Label } from '../components/ui/label.js'
+import { cn } from '../lib/utils.js'
 
 function describeTarget(channel: ChannelConfig): string {
   if (channel.type === 'email' && typeof channel.target.email === 'string') {
@@ -24,6 +25,10 @@ export function Channels() {
   const [adding, setAdding] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
+  // Only show the skeleton before any data has ever loaded - a background
+  // refresh() with channels already in hand disables the list instead, so a
+  // stale card can't be replaced by a redundant skeleton and clicked past.
+  const refreshing = loading && channels !== null
 
   async function addEmailChannel(e: React.FormEvent) {
     e.preventDefault()
@@ -71,10 +76,16 @@ export function Channels() {
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold tracking-tight">Channels</h1>
 
-      {loading && <ListSkeleton count={2} />}
+      {loading && channels === null && <ListSkeleton count={2} />}
       {error && <p className="text-base text-destructive">{error}</p>}
 
-      <div className="flex flex-col gap-3">
+      <div
+        className={cn(
+          'flex flex-col gap-3',
+          refreshing && 'skeleton-shimmer pointer-events-none rounded-md opacity-60',
+        )}
+        aria-busy={refreshing || undefined}
+      >
         {channels?.map((channel) => {
           const busy = pendingId === channel.id
           return (

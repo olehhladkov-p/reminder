@@ -10,6 +10,7 @@ import { Badge } from '../components/ui/badge.js'
 import { Button } from '../components/ui/button.js'
 import { Card, CardContent } from '../components/ui/card.js'
 import { formatFriendlyDate, formatFriendlyDateTime } from '../lib/date.js'
+import { cn } from '../lib/utils.js'
 
 const kindLabels = { renewal: 'Renewal', trial_end: 'Trial ends' }
 
@@ -67,6 +68,10 @@ export function Reminders() {
   const nameById = new Map(subscriptions?.map((sub) => [sub.id, sub.name]))
   const channelById = new Map(channels?.map((channel) => [channel.id, channel]))
   const reminderGroups = jobs ? groupJobsByReminder(jobs) : []
+  // Only show the skeleton before any data has ever loaded - a background
+  // refresh() with jobs already in hand disables the list instead, so a
+  // stale card can't be replaced by a redundant skeleton and clicked past.
+  const refreshing = jobsLoading && jobs !== null
 
   function handleNewReminder() {
     if ((subscriptions?.length ?? 0) === 0) {
@@ -87,7 +92,7 @@ export function Reminders() {
         </Button>
       </header>
 
-      {jobsLoading && <ListSkeleton />}
+      {jobsLoading && jobs === null && <ListSkeleton />}
       {jobsError && <p className="text-base text-destructive">{jobsError}</p>}
       {jobs && jobs.length === 0 && (
         <div className="flex flex-col items-center gap-3 py-10 text-center">
@@ -98,20 +103,26 @@ export function Reminders() {
         </div>
       )}
 
-      <div className="flex flex-col gap-3">
+      <div
+        className={cn(
+          'flex flex-col gap-3',
+          refreshing && 'skeleton-shimmer pointer-events-none rounded-md opacity-60',
+        )}
+        aria-busy={refreshing || undefined}
+      >
         {reminderGroups.map((group) => (
           <Card key={group.key}>
             <CardContent className="flex flex-col gap-2">
               <div className="flex flex-col gap-2">
                 <Link
                   to={`/subscriptions/${group.subscriptionId}`}
-                  className="font-medium underline hover:no-underline"
+                  className="font-medium underline underline-offset-2 hover:no-underline"
                 >
                   {nameById.get(group.subscriptionId) ?? 'Subscription'}
                 </Link>
                 <Badge>Reminder on {formatFriendlyDateTime(group.sendAt)}</Badge>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1">
                 <Badge variant="outline">
                   {kindLabels[group.kind]} on {formatFriendlyDate(group.occurrenceDate)}
                 </Badge>

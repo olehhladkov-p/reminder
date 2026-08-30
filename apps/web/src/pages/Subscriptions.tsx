@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu.js'
 import { formatFriendlyDate } from '../lib/date.js'
+import { cn } from '../lib/utils.js'
 
 const cycleLabels: Record<Subscription['cycle'], string> = {
   weekly: 'Weekly',
@@ -51,6 +52,10 @@ export function Subscriptions() {
   const { data: subscriptions, loading, error } = useResource(subscriptionsCache)
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Subscription | null>(null)
+  // Only show the skeleton before any data has ever loaded - a background
+  // refresh() with subscriptions already in hand disables the list instead,
+  // so a stale card can't be replaced by a redundant skeleton and clicked past.
+  const refreshing = loading && subscriptions !== null
 
   async function confirmDelete() {
     if (!deleteTarget) return
@@ -79,7 +84,7 @@ export function Subscriptions() {
         </Button>
       </header>
 
-      {loading && <ListSkeleton />}
+      {loading && subscriptions === null && <ListSkeleton />}
       {error && <p className="text-base text-destructive">{error}</p>}
 
       {subscriptions && subscriptions.length === 0 && (
@@ -93,16 +98,22 @@ export function Subscriptions() {
         </div>
       )}
 
-      <div className="flex flex-col gap-3">
+      <div
+        className={cn(
+          'flex flex-col gap-3',
+          refreshing && 'skeleton-shimmer pointer-events-none rounded-md opacity-60',
+        )}
+        aria-busy={refreshing || undefined}
+      >
         {subscriptions?.map((sub) => {
           const price = formatPrice(sub)
           const busy = pendingId === sub.id
           return (
             <Card key={sub.id} className="relative">
-              <CardContent className="flex min-w-0 flex-col gap-2 pr-14">
+              <CardContent className="flex flex-col gap-2 pr-14">
                 <Link
                   to={`/subscriptions/${sub.id}`}
-                  className="font-medium underline hover:no-underline"
+                  className="font-medium underline underline-offset-2 hover:no-underline"
                 >
                   {sub.name}
                 </Link>

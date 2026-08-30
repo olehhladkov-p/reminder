@@ -26,6 +26,7 @@ import { Label } from '../components/ui/label.js'
 import { Skeleton } from '../components/ui/skeleton.js'
 import { computeBudgetSummary } from '../lib/budget.js'
 import { formatFriendlyDate } from '../lib/date.js'
+import { cn } from '../lib/utils.js'
 import { enablePushNotifications, isPushSupported } from '../push/subscribe.js'
 
 const eurFormatter = new Intl.NumberFormat('en', { style: 'currency', currency: 'EUR' })
@@ -41,6 +42,10 @@ function BudgetSection() {
   const loading = subsLoading || ratesLoading
   const error = ratesError ?? subsError
   const summary = subscriptions && rates ? computeBudgetSummary(subscriptions, rates) : null
+  // Only show the skeleton before a summary has ever been computed - a
+  // background refresh() with a summary already in hand disables it instead,
+  // so stale figures can't be replaced by a redundant skeleton mid-refresh.
+  const refreshing = loading && summary !== null
 
   return (
     <Card>
@@ -49,13 +54,19 @@ function BudgetSection() {
         <CardDescription>Estimated in EUR using live exchange rates.</CardDescription>
       </CardHeader>
       <CardContent>
-        {loading && <FormSkeleton fields={3} />}
+        {loading && summary === null && <FormSkeleton fields={3} />}
         {error && <p className="text-base text-destructive">{error}</p>}
         {!loading && !error && subscriptions?.length === 0 && (
           <p className="text-base text-muted-foreground">Add a subscription to see your budget.</p>
         )}
         {summary && subscriptions && subscriptions.length > 0 && (
-          <dl className="flex flex-col gap-3">
+          <dl
+            className={cn(
+              'flex flex-col gap-3',
+              refreshing && 'skeleton-shimmer pointer-events-none rounded-md opacity-60',
+            )}
+            aria-busy={refreshing || undefined}
+          >
             <div className="flex items-center justify-between gap-4">
               <dt className="text-base text-muted-foreground">Last 30 days</dt>
               <dd className="font-medium">{eurFormatter.format(summary.last30DaysEur)}</dd>
@@ -169,10 +180,17 @@ export function Settings() {
 
       <Card>
         <CardContent>
-          {loading ? (
+          {loading && !user ? (
             <FormSkeleton fields={3} />
           ) : (
-            <form className="flex flex-col gap-4" onSubmit={handleSave}>
+            <form
+              className={cn(
+                'flex flex-col gap-4',
+                loading && user && 'skeleton-shimmer pointer-events-none rounded-md opacity-60',
+              )}
+              aria-busy={(loading && !!user) || undefined}
+              onSubmit={handleSave}
+            >
               <div className="flex flex-col gap-2">
                 <Label htmlFor="timezone">Timezone</Label>
                 <Input
