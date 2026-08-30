@@ -1,8 +1,23 @@
+import type { PushPlatform } from '@reminder/core'
 import { api } from '../api/client.js'
 import { VAPID_PUBLIC_KEY } from '../config.js'
 
+// Best-effort client detection, used only to label the channel in the UI.
+function detectPlatform(): PushPlatform {
+  return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
+}
+
 export function isPushSupported(): boolean {
   return 'serviceWorker' in navigator && 'PushManager' in window
+}
+
+/** Checks whether this device already has an active push subscription, without prompting for permission. */
+export async function hasActivePushSubscription(): Promise<boolean> {
+  if (!isPushSupported()) return false
+  const registration = await navigator.serviceWorker.getRegistration()
+  if (!registration) return false
+  const subscription = await registration.pushManager.getSubscription()
+  return subscription !== null
 }
 
 // PushManager wants the VAPID key as a raw Uint8Array, but it's handed out
@@ -38,5 +53,6 @@ export async function enablePushNotifications(): Promise<void> {
   await api.devices.register({
     endpoint: json.endpoint,
     keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+    platform: detectPlatform(),
   })
 }

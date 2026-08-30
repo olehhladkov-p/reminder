@@ -86,12 +86,17 @@ export const subscriptionSchema = z.object({
 })
 
 export const emailTargetSchema = z.object({ email: z.string().email() })
+export const pushPlatformSchema = z.enum(['desktop', 'mobile'])
 export const webPushTargetSchema = z.object({
   endpoint: z.string().url(),
   keys: z.object({
     p256dh: z.string().min(1),
     auth: z.string().min(1),
   }),
+  // Client-detected at subscribe time from the user agent - best-effort, used
+  // only to label the channel in the UI. Absent on subscriptions registered
+  // before this field existed.
+  platform: pushPlatformSchema.optional(),
 })
 
 export const channelConfigSchema = z.object({
@@ -127,6 +132,7 @@ export const notificationJobSchema = z.object({
 })
 
 export type EmailTarget = z.infer<typeof emailTargetSchema>
+export type PushPlatform = z.infer<typeof pushPlatformSchema>
 export type WebPushTarget = z.infer<typeof webPushTargetSchema>
 
 export type Cycle = z.infer<typeof cycleSchema>

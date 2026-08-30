@@ -16,6 +16,11 @@ function describeTarget(channel: ChannelConfig): string {
   if (channel.type === 'email' && typeof channel.target.email === 'string') {
     return channel.target.email
   }
+  if (channel.type === 'push') {
+    if (channel.target.platform === 'mobile') return 'Mobile notifications'
+    if (channel.target.platform === 'desktop') return 'Desktop notifications'
+    return 'Push notifications'
+  }
   return channel.type
 }
 

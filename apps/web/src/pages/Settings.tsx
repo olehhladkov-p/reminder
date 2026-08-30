@@ -36,7 +36,11 @@ import { formatFriendlyDate } from '../lib/date.js'
 import type { Theme } from '../lib/theme.js'
 import { applyTheme, getStoredTheme, THEMES } from '../lib/theme.js'
 import { cn } from '../lib/utils.js'
-import { enablePushNotifications, isPushSupported } from '../push/subscribe.js'
+import {
+  enablePushNotifications,
+  hasActivePushSubscription,
+  isPushSupported,
+} from '../push/subscribe.js'
 
 const THEME_LABELS: Record<Theme, string> = {
   default: 'Default',
@@ -159,10 +163,15 @@ export function Settings() {
   const [notificationPermission, setNotificationPermission] = useState(
     isPushSupported() ? Notification.permission : null,
   )
+  const [pushSubscribed, setPushSubscribed] = useState(false)
 
   useEffect(() => {
     if (!location.hash) return
     document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' })
+  }, [])
+
+  useEffect(() => {
+    hasActivePushSubscription().then(setPushSubscribed)
   }, [])
 
   async function handleEnablePush() {
@@ -170,6 +179,7 @@ export function Settings() {
     try {
       await enablePushNotifications()
       setNotificationPermission(Notification.permission)
+      setPushSubscribed(true)
       toast.success('Push notifications enabled.')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not enable push notifications.')
@@ -308,12 +318,12 @@ export function Settings() {
             <Button
               variant="outline"
               className="w-full"
-              disabled={enablingPush || notificationPermission === 'denied'}
+              disabled={enablingPush || notificationPermission === 'denied' || pushSubscribed}
               onClick={handleEnablePush}
             >
               {enablingPush
                 ? 'Enabling…'
-                : notificationPermission === 'granted'
+                : pushSubscribed
                   ? 'Push notifications enabled'
                   : 'Enable push notifications'}
             </Button>
