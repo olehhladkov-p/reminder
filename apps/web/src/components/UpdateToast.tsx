@@ -37,8 +37,10 @@ export function UpdateToast() {
       } catch (err) {
         // Fallback: attempt to call skipWaiting directly on the worker instance
         try {
-          // @ts-ignore
-          await registration.waiting?.skipWaiting()
+          const maybeSkip = (registration.waiting as any)?.skipWaiting
+          if (typeof maybeSkip === 'function') {
+            await maybeSkip.call(registration.waiting)
+          }
         } catch {}
       }
     } else {
