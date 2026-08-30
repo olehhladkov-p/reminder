@@ -23,11 +23,64 @@ import {
 } from '../components/ui/dialog.js'
 import { Input } from '../components/ui/input.js'
 import { Label } from '../components/ui/label.js'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select.js'
 import { Skeleton } from '../components/ui/skeleton.js'
 import { computeBudgetSummary, eurFormatter } from '../lib/budget.js'
 import { formatFriendlyDate } from '../lib/date.js'
+import type { Theme } from '../lib/theme.js'
+import { applyTheme, getStoredTheme, THEMES } from '../lib/theme.js'
 import { cn } from '../lib/utils.js'
 import { enablePushNotifications, isPushSupported } from '../push/subscribe.js'
+
+const THEME_LABELS: Record<Theme, string> = {
+  default: 'Default',
+  bubble: 'Bubble',
+  claude: 'Claude',
+  elegant: 'Elegant',
+  claymorphism: 'Claymorphism',
+}
+
+function ThemeSection() {
+  const [theme, setTheme] = useState<Theme>(() => getStoredTheme())
+
+  function handleChange(value: string) {
+    const next = value as Theme
+    setTheme(next)
+    applyTheme(next)
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Appearance</CardTitle>
+        <CardDescription>Choose a color theme for the app.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="theme">Theme</Label>
+          <Select value={theme} onValueChange={handleChange}>
+            <SelectTrigger id="theme">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {THEMES.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {THEME_LABELS[t]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 function BudgetSection() {
   const {
@@ -236,6 +289,8 @@ export function Settings() {
           )}
         </CardContent>
       </Card>
+
+      <ThemeSection />
 
       <BudgetSection />
 

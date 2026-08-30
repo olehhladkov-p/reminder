@@ -57,7 +57,7 @@ function UpcomingBudgetBanner() {
   const { upcomingMonthEur } = computeBudgetSummary(subscriptions, rates)
 
   return (
-    <Card className="border-info bg-info text-info-foreground">
+    <Card className="border bg-card text-foreground">
       <CardContent className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-base">
           Due in the next 30 days:{' '}
@@ -138,7 +138,7 @@ export function Subscriptions() {
           const busy = pendingId === sub.id
           return (
             <Card key={sub.id} className="relative">
-              <CardContent className="flex flex-col gap-2 pr-14">
+              <CardContent className="flex flex-col items-start gap-2 pr-14">
                 <Link
                   to={`/subscriptions/${sub.id}`}
                   className="font-medium underline underline-offset-2 hover:no-underline"

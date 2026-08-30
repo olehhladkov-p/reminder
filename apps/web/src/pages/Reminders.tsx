@@ -119,7 +119,7 @@ export function Reminders() {
         {visibleGroups.map((group) => (
           <Card key={group.key}>
             <CardContent className="flex flex-col gap-2">
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col items-start gap-2">
                 <Link
                   to={`/subscriptions/${group.subscriptionId}`}
                   className="font-medium underline underline-offset-2 hover:no-underline"

@@ -11,6 +11,14 @@
     <link rel="alternate icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>Subscription Reminder</title>
+    <script>
+      (() => {
+        var theme = localStorage.getItem('theme')
+        if (theme && theme !== 'default') {
+          document.documentElement.setAttribute('data-theme', theme)
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
