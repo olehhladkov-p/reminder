@@ -1,6 +1,7 @@
 import type { ChannelType, NotificationJob } from '@reminder/core'
 import type { LucideIcon } from 'lucide-react'
 import { Mail, MessageCircle, Plus, Smartphone, Webhook } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useResource } from '../api/resourceCache.js'
@@ -11,6 +12,8 @@ import { Button } from '../components/ui/button.js'
 import { Card, CardContent } from '../components/ui/card.js'
 import { formatFriendlyDate, formatFriendlyDateTime } from '../lib/date.js'
 import { cn } from '../lib/utils.js'
+
+const DEFAULT_VISIBLE_COUNT = 5
 
 const kindLabels = { renewal: 'Renewal', trial_end: 'Trial ends' }
 
@@ -61,6 +64,7 @@ function groupJobsByReminder(jobs: readonly NotificationJob[]): ReminderGroup[] 
 
 export function Reminders() {
   const navigate = useNavigate()
+  const [showAll, setShowAll] = useState(false)
   const { data: jobs, loading: jobsLoading, error: jobsError } = useResource(remindersCache)
   const { data: subscriptions } = useResource(subscriptionsCache)
   const { data: channels } = useResource(channelsCache)
@@ -68,6 +72,8 @@ export function Reminders() {
   const nameById = new Map(subscriptions?.map((sub) => [sub.id, sub.name]))
   const channelById = new Map(channels?.map((channel) => [channel.id, channel]))
   const reminderGroups = jobs ? groupJobsByReminder(jobs) : []
+  const visibleGroups = showAll ? reminderGroups : reminderGroups.slice(0, DEFAULT_VISIBLE_COUNT)
+  const hiddenCount = reminderGroups.length - visibleGroups.length
   // Only show the skeleton before any data has ever loaded - a background
   // refresh() with jobs already in hand disables the list instead, so a
   // stale card can't be replaced by a redundant skeleton and clicked past.
@@ -110,7 +116,7 @@ export function Reminders() {
         )}
         aria-busy={refreshing || undefined}
       >
-        {reminderGroups.map((group) => (
+        {visibleGroups.map((group) => (
           <Card key={group.key}>
             <CardContent className="flex flex-col gap-2">
               <div className="flex flex-col gap-2">
@@ -141,6 +147,12 @@ export function Reminders() {
           </Card>
         ))}
       </div>
+
+      {!showAll && hiddenCount > 0 && (
+        <Button variant="outline" onClick={() => setShowAll(true)}>
+          Show all ({reminderGroups.length})
+        </Button>
+      )}
     </div>
   )
 }

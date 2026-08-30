@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { api } from '../api/client.js'
 import { useResource } from '../api/resourceCache.js'
-import { remindersCache, subscriptionsCache } from '../api/resources.js'
+import { exchangeRatesCache, remindersCache, subscriptionsCache } from '../api/resources.js'
 import { ListSkeleton } from '../components/skeletons.js'
 import { Badge } from '../components/ui/badge.js'
 import { Button } from '../components/ui/button.js'
@@ -24,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu.js'
+import { computeBudgetSummary, eurFormatter } from '../lib/budget.js'
 import { formatFriendlyDate } from '../lib/date.js'
 import { cn } from '../lib/utils.js'
 
@@ -46,6 +47,31 @@ function formatCycle(sub: Subscription): string {
     return `Every ${sub.intervalDays} day${sub.intervalDays === 1 ? '' : 's'}`
   }
   return cycleLabels[sub.cycle]
+}
+
+function UpcomingBudgetBanner() {
+  const { data: subscriptions } = useResource(subscriptionsCache)
+  const { data: rates } = useResource(exchangeRatesCache)
+
+  if (!subscriptions || subscriptions.length === 0 || !rates) return null
+  const { upcomingMonthEur } = computeBudgetSummary(subscriptions, rates)
+
+  return (
+    <Card className="border-info bg-info text-info-foreground">
+      <CardContent className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-base">
+          Due in the next 30 days:{' '}
+          <span className="font-medium">{eurFormatter.format(upcomingMonthEur)}</span>
+        </p>
+        <Link
+          to="/settings#budget"
+          className="text-base font-medium underline underline-offset-2 hover:no-underline"
+        >
+          View full budget
+        </Link>
+      </CardContent>
+    </Card>
+  )
 }
 
 export function Subscriptions() {
@@ -83,6 +109,8 @@ export function Subscriptions() {
           </Link>
         </Button>
       </header>
+
+      <UpcomingBudgetBanner />
 
       {loading && subscriptions === null && <ListSkeleton />}
       {error && <p className="text-base text-destructive">{error}</p>}
