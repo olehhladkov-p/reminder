@@ -3,11 +3,13 @@ import { createApp } from './app.js'
 import { createAuth, type SendMagicLink } from './auth.js'
 import { channelRegistry } from './channels.js'
 import { db } from './db.js'
+import { setLastDevMagicLink } from './devMagicLinkStore.js'
 import { env } from './env.js'
 import { sendMagicLinkEmail } from './magicLinkEmail.js'
 
 const devLogMagicLink: SendMagicLink = async (email, url) => {
   console.log(`[DEV_LOG_MAGIC_LINK] sign-in link for ${email}:\n${url}`)
+  setLastDevMagicLink(email, url)
 }
 
 const auth = createAuth(db, env.DEV_LOG_MAGIC_LINK ? devLogMagicLink : sendMagicLinkEmail)

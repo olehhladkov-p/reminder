@@ -1,7 +1,8 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
-import { webAppOrigins } from './env.js'
+import { getLastDevMagicLink } from './devMagicLinkStore.js'
+import { env, webAppOrigins } from './env.js'
 import { createChannelRoutes } from './routes/channels.js'
 import { createDeviceRoutes } from './routes/devices.js'
 import { createMeRoutes } from './routes/me.js'
@@ -25,6 +26,18 @@ export function createApp(deps: AppDeps) {
   // external keep-alive ping to stop Render's free tier from spinning the
   // service down after 15 minutes of no HTTP traffic.
   app.get('/health', (c) => c.json({ ok: true }))
+
+  // Dev convenience only (see DEV_LOG_MAGIC_LINK in env.ts): lets the web
+  // app fetch the most recently issued magic-link URL and display it
+  // directly, instead of the developer having to go find it in server logs.
+  // 404s outright when the flag is off, so this doesn't exist as an attack
+  // surface anywhere real users sign in.
+  app.get('/v1/dev/magic-link', (c) => {
+    if (!env.DEV_LOG_MAGIC_LINK) return c.notFound()
+    const last = getLastDevMagicLink()
+    if (!last) return c.notFound()
+    return c.json(last)
+  })
 
   app.on(['GET', 'POST'], '/v1/auth/*', (c) => deps.auth.handler(c.req.raw))
 
