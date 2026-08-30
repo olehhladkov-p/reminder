@@ -2,13 +2,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { api } from '../api/client.js'
 import { useResource } from '../api/resourceCache.js'
-import {
-  exchangeRatesCache,
-  meCache,
-  remindersCache,
-  resetAllCaches,
-  subscriptionsCache,
-} from '../api/resources.js'
+import { meCache, remindersCache, resetAllCaches } from '../api/resources.js'
 import { authClient } from '../auth/authClient.js'
 import { FormSkeleton } from '../components/skeletons.js'
 import { Button } from '../components/ui/button.js'
@@ -31,8 +25,6 @@ import {
   SelectValue,
 } from '../components/ui/select.js'
 import { Skeleton } from '../components/ui/skeleton.js'
-import { computeBudgetSummary, eurFormatter } from '../lib/budget.js'
-import { formatFriendlyDate } from '../lib/date.js'
 import type { Theme } from '../lib/theme.js'
 import { applyTheme, getStoredTheme, THEMES } from '../lib/theme.js'
 import { cn } from '../lib/utils.js'
@@ -81,64 +73,6 @@ function ThemeSection() {
             </SelectContent>
           </Select>
         </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function BudgetSection() {
-  const {
-    data: subscriptions,
-    loading: subsLoading,
-    error: subsError,
-  } = useResource(subscriptionsCache)
-  const { data: rates, loading: ratesLoading, error: ratesError } = useResource(exchangeRatesCache)
-
-  const loading = subsLoading || ratesLoading
-  const error = ratesError ?? subsError
-  const summary = subscriptions && rates ? computeBudgetSummary(subscriptions, rates) : null
-  // Only show the skeleton before a summary has ever been computed - a
-  // background refresh() with a summary already in hand disables it instead,
-  // so stale figures can't be replaced by a redundant skeleton mid-refresh.
-  const refreshing = loading && summary !== null
-
-  return (
-    <Card id="budget">
-      <CardHeader>
-        <CardTitle className="text-base">Budget</CardTitle>
-        <CardDescription>Estimated in EUR using live exchange rates.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {loading && summary === null && <FormSkeleton fields={3} />}
-        {error && <p className="text-base text-destructive">{error}</p>}
-        {!loading && !error && subscriptions?.length === 0 && (
-          <p className="text-base text-muted-foreground">Add a subscription to see your budget.</p>
-        )}
-        {summary && subscriptions && subscriptions.length > 0 && (
-          <dl
-            className={cn(
-              'flex flex-col gap-3',
-              refreshing && 'skeleton-shimmer pointer-events-none rounded-md opacity-60',
-            )}
-            aria-busy={refreshing || undefined}
-          >
-            <div className="flex items-center justify-between gap-4">
-              <dt className="text-base text-muted-foreground">Last 30 days</dt>
-              <dd className="font-medium">{eurFormatter.format(summary.last30DaysEur)}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <dt className="text-base text-muted-foreground">Due in the next 30 days</dt>
-              <dd className="font-medium">{eurFormatter.format(summary.upcomingMonthEur)}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <dt className="text-base text-muted-foreground">
-                Total spent since{' '}
-                {summary.periodStart ? formatFriendlyDate(summary.periodStart) : '—'}
-              </dt>
-              <dd className="font-medium">{eurFormatter.format(summary.totalSinceStartEur)}</dd>
-            </div>
-          </dl>
-        )}
       </CardContent>
     </Card>
   )
@@ -301,8 +235,6 @@ export function Settings() {
       </Card>
 
       <ThemeSection />
-
-      <BudgetSection />
 
       {notificationPermission !== null && (
         <Card>
