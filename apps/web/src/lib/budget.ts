@@ -9,6 +9,8 @@ import {
 } from '@reminder/core'
 import { type ExchangeRates, toEur } from './currency.js'
 
+export const eurFormatter = new Intl.NumberFormat('en', { style: 'currency', currency: 'EUR' })
+
 function dateToPlainDate(date: Date): PlainDate {
   return { year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate() }
 }

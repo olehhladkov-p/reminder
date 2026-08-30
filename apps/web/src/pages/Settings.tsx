@@ -24,12 +24,10 @@ import {
 import { Input } from '../components/ui/input.js'
 import { Label } from '../components/ui/label.js'
 import { Skeleton } from '../components/ui/skeleton.js'
-import { computeBudgetSummary } from '../lib/budget.js'
+import { computeBudgetSummary, eurFormatter } from '../lib/budget.js'
 import { formatFriendlyDate } from '../lib/date.js'
 import { cn } from '../lib/utils.js'
 import { enablePushNotifications, isPushSupported } from '../push/subscribe.js'
-
-const eurFormatter = new Intl.NumberFormat('en', { style: 'currency', currency: 'EUR' })
 
 function BudgetSection() {
   const {
@@ -48,7 +46,7 @@ function BudgetSection() {
   const refreshing = loading && summary !== null
 
   return (
-    <Card>
+    <Card id="budget">
       <CardHeader>
         <CardTitle className="text-base">Budget</CardTitle>
         <CardDescription>Estimated in EUR using live exchange rates.</CardDescription>
@@ -108,6 +106,11 @@ export function Settings() {
   const [notificationPermission, setNotificationPermission] = useState(
     isPushSupported() ? Notification.permission : null,
   )
+
+  useEffect(() => {
+    if (!location.hash) return
+    document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' })
+  }, [])
 
   async function handleEnablePush() {
     setEnablingPush(true)
