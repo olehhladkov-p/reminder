@@ -14,27 +14,11 @@ const envSchema = z.object({
   RESEND_FROM_EMAIL: z.string().email(),
   // Dev-only escape hatch: log the magic-link URL to the console instead of
   // sending it through Resend, so local development doesn't need a real
-  // inbox for every sign-in. Never set this in render.yaml - it must stay
-  // opt-in via a local .env, since render.yaml's NODE_ENV=production literal
-  // is baked into every environment Render spins up from that blueprint
-  // (including any future preview environments), so branching on NODE_ENV
-  // here wouldn't actually distinguish preview from production.
+  // inbox for every sign-in. Local-only - reminder-api has no Render preview
+  // environment (Render's Preview Environments feature requires a Pro plan
+  // for compute services; only the reminder-web static site gets one on the
+  // free plan), so this never needs to be set anywhere but a local .env.
   DEV_LOG_MAGIC_LINK: z.coerce.boolean().default(false),
-  // Preview-only escape hatch for reminder-web's static-site /v1/* proxy
-  // rewrite (see render.yaml), which can't be pointed at a preview's own
-  // dynamic API URL - Render routes destinations are static strings. When
-  // true, the web app calls the API's own origin directly (cross-origin)
-  // instead of relying on the proxy, so the session cookie switches to
-  // SameSite=None (required for cross-site fetch) and the auth base URL
-  // uses RENDER_EXTERNAL_URL instead of BETTER_AUTH_URL. Never set this in
-  // production - see apps/api/src/auth.ts for why (the whole reason the
-  // proxy exists is to avoid Safari ITP dropping SameSite=None cookies).
-  CROSS_ORIGIN_AUTH: z.coerce.boolean().default(false),
-  // Auto-injected by Render on every service instance (including preview
-  // ones) with that instance's own public URL - not set locally. Used as
-  // the auth base URL when CROSS_ORIGIN_AUTH is on, since a preview API's
-  // URL is only known at runtime, not at render.yaml authoring time.
-  RENDER_EXTERNAL_URL: z.string().url().optional(),
   // Web Push (VAPID) - the public key is also served to the client (it's
   // safe to expose; only the private key signs push messages).
   VAPID_PUBLIC_KEY: z.string().min(1),

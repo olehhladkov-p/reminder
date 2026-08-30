@@ -13,43 +13,9 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      # Off in production. For preview environments: after enabling Preview
-      # Environments on this Blueprint, open this var in the reminder-api
-      # service's Environment tab and give it a separate preview value of
-      # `true` - that makes preview deploys log magic-link URLs to the
-      # service logs instead of sending real email through Resend. Note this
-      # only covers magic-link auth: RESEND_API_KEY/RESEND_FROM_EMAIL below
-      # still need some non-empty value even so, since channels.ts builds the
-      # (separate) reminder-notification email channel eagerly at startup and
-      # the Resend SDK throws if the key is empty - a placeholder key is fine
-      # for previews since that code path won't be exercised by sign-in
-      # testing. See apps/api/src/env.ts, apps/api/src/magicLinkEmail.ts, and
-      # apps/api/src/channels.ts.
       - key: DEV_LOG_MAGIC_LINK
         value: false
-      # Off in production. reminder-web's /v1/* proxy rewrite below can't be
-      # given a dynamic per-preview destination (Render route destinations
-      # are static strings), so previews route around it entirely: give this
-      # var a separate preview value of `true` to make the web app call this
-      # API's own preview URL directly (cross-origin) instead. That needs
-      # VITE_API_URL set on reminder-web (see its envVars below) and
-      # WEB_APP_ORIGIN below to include the preview web app's own origin, so
-      # CORS and the session cookie both accept the cross-origin request. See
-      # apps/api/src/env.ts and apps/api/src/auth.ts for what this toggles.
-      - key: CROSS_ORIGIN_AUTH
-        value: false
       # Neon Postgres - pooled connection (same DB as local dev).
-      #
-      # For preview environments: don't point this at the production
-      # database. Create a Neon branch for previews (Neon dashboard -> your
-      # project -> Branches -> create branch from `main`, e.g. named
-      # "preview") and use *that* branch's pooled connection string as this
-      # var's separate preview value in the reminder-api service's
-      # Environment tab (same mechanism as DEV_LOG_MAGIC_LINK above).
-      # Otherwise magic-link sign-ins during preview testing create real rows
-      # in the production `user`/`session`/`account` tables. A Neon branch is
-      # a cheap copy-on-write snapshot, so it starts with production's schema
-      # and data without needing its own migration run.
       - key: DATABASE_URL
         sync: false
       - key: BETTER_AUTH_SECRET
@@ -60,10 +26,6 @@ services:
       # is same-origin with the web app - magic-link emails and the session
       # cookie need to match that origin, or Safari's ITP silently drops the
       # cookie on iOS. See apps/api/src/auth.ts for details.
-      #
-      # No preview-specific value needed: when CROSS_ORIGIN_AUTH is on,
-      # apps/api/src/auth.ts uses Render's auto-injected RENDER_EXTERNAL_URL
-      # (this instance's own preview URL) instead of this var.
       - key: BETTER_AUTH_URL
         sync: false
       - key: RESEND_API_KEY
@@ -81,16 +43,12 @@ services:
       # - if left unset it silently falls back to http://localhost:5173 (see
       # apps/worker/src/env.ts), which is why email "View subscription"
       # links used to point at an unreachable page.
-      #
-      # For preview environments with CROSS_ORIGIN_AUTH on: this needs a
-      # preview value that includes the preview reminder-web instance's own
-      # URL (CORS and better-auth's trustedOrigins both read this, comma-
-      # separated - see webAppOrigins in apps/api/src/env.ts), not the
-      # production domain above.
       - key: WEB_APP_ORIGIN
         sync: false
 
-  # PWA static site - free, no spin-down, backed by Render's CDN.
+  # PWA static site - free, no spin-down, backed by Render's CDN. Also the
+  # only one of these two services Render can generate a Preview Environment
+  # for on the free plan (reminder-api can't - see the routes comment below).
   - type: web
     name: reminder-web
     runtime: static
@@ -101,23 +59,11 @@ services:
       # separately at the DNS/registrar level).
       - dailytrace.dev
     envVars:
-      # Intentionally unset in production - apps/web's config.ts falls back
-      # to the page's own origin, and the rewrite rule below proxies /v1/* to
-      # the API, keeping auth same-origin (see apps/api/src/auth.ts). Also
-      # set for local dev via apps/web/.env, where the API runs on a
-      # different port.
-      #
-      # For preview environments (paired with CROSS_ORIGIN_AUTH on the
-      # reminder-api service): give this a preview value pointing at that
-      # preview's own reminder-api instance, so the web app calls it directly
-      # instead of through the (production-only) rewrite below. If your
-      # Render plan's dashboard offers a "link to another service" / fromService
-      # picker for preview values, prefer that - it re-resolves automatically
-      # to each new preview's URL, unlike a value you paste in by hand.
-      # Otherwise, look up that PR's reminder-api preview URL in the Render
-      # dashboard and paste it in per PR.
-      - key: VITE_API_URL
-        sync: false
+      # VITE_API_URL is intentionally NOT set here in production - apps/web's
+      # config.ts falls back to the page's own origin, and the rewrite rule
+      # below proxies /v1/* to the API. This keeps auth same-origin from the
+      # browser's perspective (see apps/api/src/auth.ts). Only set VITE_API_URL
+      # for local dev (apps/web/.env), where the API runs on a different port.
       - key: VITE_VAPID_PUBLIC_KEY
         sync: false
     routes:
@@ -129,11 +75,15 @@ services:
       # the SPA fallback rule below since Render evaluates routes in order.
       # TODO: replace with reminder-api's actual onrender.com URL if it differs.
       #
-      # Production only - this destination is a fixed string, so it always
-      # points at production's reminder-api and can't follow a preview
-      # deploy. Preview environments skip this route entirely: they set
-      # VITE_API_URL (above) and CROSS_ORIGIN_AUTH (on reminder-api) so the
-      # web app calls its sibling preview API directly instead.
+      # This same rule also applies to reminder-web's own Preview
+      # Environments (e.g. https://reminder-web-pr-2.onrender.com) - Render
+      # generates those on the free plan since a static site preview is just
+      # files on a CDN, no duplicate compute needed. reminder-api itself
+      # can't get a preview instance the same way (Render's Preview
+      # Environments feature requires a paid plan for actual compute
+      # services), so a reminder-web preview's /v1/* calls proxy to this
+      # same fixed production API - fine for previewing frontend-only
+      # changes, but a preview has no isolated backend/database of its own.
       - type: rewrite
         source: /v1/*
         destination: https://reminder-api-3sr2.onrender.com/v1/*
