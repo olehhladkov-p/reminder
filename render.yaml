@@ -13,8 +13,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DEV_LOG_MAGIC_LINK
-        value: false
       # Neon Postgres - pooled connection (same DB as local dev).
       - key: DATABASE_URL
         sync: false
