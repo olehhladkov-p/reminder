@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthCallback } from './pages/AuthCallback.js'
+import { Budget } from './pages/Budget.js'
 import { Channels } from './pages/Channels.js'
 import { ReminderEdit } from './pages/ReminderEdit.js'
 import { ReminderNew } from './pages/ReminderNew.js'
@@ -28,6 +29,7 @@ export function App() {
           <Route path="/" element={<Subscriptions />} />
           <Route path="/subscriptions/new" element={<SubscriptionNew />} />
           <Route path="/subscriptions/:id" element={<SubscriptionEdit />} />
+          <Route path="/budget" element={<Budget />} />
           <Route path="/reminders" element={<Reminders />} />
           <Route path="/reminders/new" element={<ReminderNew />} />
           <Route

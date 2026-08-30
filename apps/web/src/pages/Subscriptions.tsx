@@ -64,7 +64,7 @@ function UpcomingBudgetBanner() {
           <span className="font-medium">{eurFormatter.format(upcomingMonthEur)}</span>
         </p>
         <Link
-          to="/settings#budget"
+          to="/budget"
           className="text-base font-medium underline underline-offset-2 hover:no-underline"
         >
           View full budget

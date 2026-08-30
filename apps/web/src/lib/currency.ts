@@ -5,6 +5,8 @@ export interface ExchangeRates {
   fetchedAt: number
 }
 
+export type CurrencyCode = 'EUR' | 'USD' | 'UAH'
+
 // Free, no-key exchange rate API (https://www.exchangerate-api.com/docs/free),
 // updated once every 24h - cached client-side on the same cadence below.
 const RATES_URL = 'https://open.er-api.com/v6/latest/EUR'
@@ -50,4 +52,20 @@ export function toEur(amount: number, currency: string | null, rates: ExchangeRa
   if (!currency || currency === 'EUR') return amount
   const rate = rates.rates[currency]
   return rate ? amount / rate : amount
+}
+
+/** Converts an amount from EUR to the target currency. */
+export function fromEur(
+  amountEur: number,
+  targetCurrency: CurrencyCode,
+  rates: ExchangeRates,
+): number {
+  if (targetCurrency === 'EUR') return amountEur
+  const rate = rates.rates[targetCurrency]
+  return rate ? amountEur * rate : amountEur
+}
+
+/** Creates a currency formatter for the given currency code. */
+export function createCurrencyFormatter(currency: CurrencyCode): Intl.NumberFormat {
+  return new Intl.NumberFormat('en', { style: 'currency', currency })
 }

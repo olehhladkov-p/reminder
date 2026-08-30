@@ -7,9 +7,22 @@ import {
   parseIsoDate,
   type Subscription,
 } from '@reminder/core'
-import { type ExchangeRates, toEur } from './currency.js'
+import { type CurrencyCode, type ExchangeRates, fromEur, toEur } from './currency.js'
 
 export const eurFormatter = new Intl.NumberFormat('en', { style: 'currency', currency: 'EUR' })
+export const usdFormatter = new Intl.NumberFormat('en', { style: 'currency', currency: 'USD' })
+export const uahFormatter = new Intl.NumberFormat('en', { style: 'currency', currency: 'UAH' })
+
+export function getFormatterForCurrency(currency: CurrencyCode): Intl.NumberFormat {
+  switch (currency) {
+    case 'EUR':
+      return eurFormatter
+    case 'USD':
+      return usdFormatter
+    case 'UAH':
+      return uahFormatter
+  }
+}
 
 function dateToPlainDate(date: Date): PlainDate {
   return { year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate() }
@@ -61,6 +74,16 @@ export interface BudgetSummary {
   periodStart: string | null
 }
 
+/** Extended budget summary with amounts in multiple currencies. */
+export interface BudgetSummaryMultiCurrency extends BudgetSummary {
+  last30DaysUsd: number
+  last30DaysUah: number
+  upcomingMonthUsd: number
+  upcomingMonthUah: number
+  totalSinceStartUsd: number
+  totalSinceStartUah: number
+}
+
 export function computeBudgetSummary(
   subscriptions: readonly Subscription[],
   rates: ExchangeRates,
@@ -98,5 +121,23 @@ export function computeBudgetSummary(
     upcomingMonthEur,
     totalSinceStartEur,
     periodStart: periodStartDate ? formatIsoDate(dateToPlainDate(periodStartDate)) : null,
+  }
+}
+
+export function computeBudgetSummaryMultiCurrency(
+  subscriptions: readonly Subscription[],
+  rates: ExchangeRates,
+  now: Date = new Date(),
+): BudgetSummaryMultiCurrency {
+  const eurSummary = computeBudgetSummary(subscriptions, rates, now)
+
+  return {
+    ...eurSummary,
+    last30DaysUsd: fromEur(eurSummary.last30DaysEur, 'USD', rates),
+    last30DaysUah: fromEur(eurSummary.last30DaysEur, 'UAH', rates),
+    upcomingMonthUsd: fromEur(eurSummary.upcomingMonthEur, 'USD', rates),
+    upcomingMonthUah: fromEur(eurSummary.upcomingMonthEur, 'UAH', rates),
+    totalSinceStartUsd: fromEur(eurSummary.totalSinceStartEur, 'USD', rates),
+    totalSinceStartUah: fromEur(eurSummary.totalSinceStartEur, 'UAH', rates),
   }
 }
