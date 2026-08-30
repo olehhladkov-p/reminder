@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "dotenv -e ../../.env -- tsx watch src/index.ts",
+    "seed:dev": "dotenv -e ../../.env -- tsx src/scripts/seedDevUser.ts",
     "start": "node dist/index.js",
     "start:render": "node dist/renderStart.js",
     "lint": "biome lint ./src",
