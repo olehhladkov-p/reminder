@@ -18,8 +18,8 @@ services:
         sync: false
       - key: BETTER_AUTH_SECRET
         sync: false
-      # Set to the reminder-web static site's onrender.com URL, NOT this
-      # service's own URL. The web app proxies /v1/* to this service (see
+      # Set to the reminder-web static site's public URL, NOT this service's
+      # own URL. The web app proxies /v1/* to this service (see
       # reminder-web's routes below), so from the browser's perspective auth
       # is same-origin with the web app - magic-link emails and the session
       # cookie need to match that origin, or Safari's ITP silently drops the
@@ -36,7 +36,11 @@ services:
         sync: false
       - key: VAPID_SUBJECT
         sync: false
-      # The reminder-web service's onrender.com URL once known.
+      # reminder-web's custom domain (see its `domains` entry below):
+      # https://dailytrace.dev. Must be set explicitly in Render's dashboard
+      # - if left unset it silently falls back to http://localhost:5173 (see
+      # apps/worker/src/env.ts), which is why email "View subscription"
+      # links used to point at an unreachable page.
       - key: WEB_APP_ORIGIN
         sync: false
 
@@ -46,6 +50,10 @@ services:
     runtime: static
     buildCommand: pnpm install --frozen-lockfile && pnpm turbo run build --filter=@reminder/web...
     staticPublishPath: apps/web/dist
+    domains:
+      # Apex domain - www.dailytrace.dev redirects here (configured
+      # separately at the DNS/registrar level).
+      - dailytrace.dev
     envVars:
       # VITE_API_URL is intentionally NOT set here in production - apps/web's
       # config.ts falls back to the page's own origin, and the rewrite rule
