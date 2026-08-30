@@ -20,6 +20,21 @@ const envSchema = z.object({
   // (including any future preview environments), so branching on NODE_ENV
   // here wouldn't actually distinguish preview from production.
   DEV_LOG_MAGIC_LINK: z.coerce.boolean().default(false),
+  // Preview-only escape hatch for reminder-web's static-site /v1/* proxy
+  // rewrite (see render.yaml), which can't be pointed at a preview's own
+  // dynamic API URL - Render routes destinations are static strings. When
+  // true, the web app calls the API's own origin directly (cross-origin)
+  // instead of relying on the proxy, so the session cookie switches to
+  // SameSite=None (required for cross-site fetch) and the auth base URL
+  // uses RENDER_EXTERNAL_URL instead of BETTER_AUTH_URL. Never set this in
+  // production - see apps/api/src/auth.ts for why (the whole reason the
+  // proxy exists is to avoid Safari ITP dropping SameSite=None cookies).
+  CROSS_ORIGIN_AUTH: z.coerce.boolean().default(false),
+  // Auto-injected by Render on every service instance (including preview
+  // ones) with that instance's own public URL - not set locally. Used as
+  // the auth base URL when CROSS_ORIGIN_AUTH is on, since a preview API's
+  // URL is only known at runtime, not at render.yaml authoring time.
+  RENDER_EXTERNAL_URL: z.string().url().optional(),
   // Web Push (VAPID) - the public key is also served to the client (it's
   // safe to expose; only the private key signs push messages).
   VAPID_PUBLIC_KEY: z.string().min(1),

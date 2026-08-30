@@ -22,7 +22,16 @@ export type SendMagicLink = (email: string, url: string) => Promise<void>
 export function createAuth(db: Db, sendMagicLink: SendMagicLink) {
   return betterAuth({
     secret: env.BETTER_AUTH_SECRET,
-    baseURL: env.BETTER_AUTH_URL,
+    // Normally the web app's own origin (not the API's - see render.yaml),
+    // proxied same-origin through the static site's /v1/* rewrite. Render
+    // Preview Environments can't give that rewrite rule a dynamic per-PR
+    // destination, so previews set CROSS_ORIGIN_AUTH instead and skip the
+    // proxy entirely - RENDER_EXTERNAL_URL is this instance's own actual
+    // preview URL, known only at runtime.
+    baseURL:
+      env.CROSS_ORIGIN_AUTH && env.RENDER_EXTERNAL_URL
+        ? env.RENDER_EXTERNAL_URL
+        : env.BETTER_AUTH_URL,
     basePath: '/v1/auth',
     database: drizzleAdapter(db, {
       provider: 'pg',
@@ -32,15 +41,21 @@ export function createAuth(db: Db, sendMagicLink: SendMagicLink) {
       database: {
         generateId: 'uuid',
       },
-      // BETTER_AUTH_URL is set to the web app's own origin (not the API's -
-      // see render.yaml), and the web app's static site proxies /v1/* to
-      // this API service. So from the browser's point of view every auth
-      // request, including the magic-link verify redirect, is same-origin,
-      // and the default SameSite=Lax cookie works fine. A prior version of
-      // this used SameSite=None to survive being genuinely cross-origin,
-      // but Safari's Intelligent Tracking Prevention silently drops
-      // SameSite=None cookies on cross-site fetches, which broke magic-link
-      // sign-in on iOS - hence routing everything through one origin instead.
+      // Same-origin (the default): the default SameSite=Lax cookie works
+      // fine, and it's deliberately NOT SameSite=None because Safari's
+      // Intelligent Tracking Prevention silently drops SameSite=None cookies
+      // on cross-site fetches, which broke magic-link sign-in on iOS -
+      // that's why production routes everything through one origin instead
+      // of calling the API's own domain directly. CROSS_ORIGIN_AUTH opts a
+      // preview environment back into genuine cross-origin cookies, on the
+      // assumption previews are for functional testing, not iOS Safari
+      // compatibility testing.
+      ...(env.CROSS_ORIGIN_AUTH
+        ? {
+            useSecureCookies: true,
+            defaultCookieAttributes: { sameSite: 'none' as const, secure: true },
+          }
+        : {}),
     },
     emailAndPassword: {
       enabled: false,
