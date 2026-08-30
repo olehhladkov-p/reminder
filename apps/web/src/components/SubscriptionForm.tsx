@@ -141,7 +141,7 @@ export function SubscriptionForm({
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
+        <div className="flex min-w-0 flex-col gap-2">
           <Label htmlFor="nextRenewalDate">Next renewal</Label>
           <Input
             id="nextRenewalDate"
@@ -152,7 +152,7 @@ export function SubscriptionForm({
           />
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex min-w-0 flex-col gap-2">
           <Label htmlFor="cycle">Billing cycle</Label>
           <Select value={values.cycle} onValueChange={(v) => set('cycle', v as Cycle)}>
             <SelectTrigger id="cycle">
@@ -226,7 +226,7 @@ export function SubscriptionForm({
         <p className="text-sm text-muted-foreground">Comma-separated days before renewal.</p>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex min-w-0 flex-col gap-2">
         <Label htmlFor="trialEndsAt">Trial ends</Label>
         <Input
           id="trialEndsAt"
