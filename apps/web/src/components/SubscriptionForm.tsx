@@ -6,8 +6,10 @@ import { Label } from './ui/label.js'
 import { RadioGroup, RadioGroupItem } from './ui/radio-group.js'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select.js'
 import { Textarea } from './ui/textarea.js'
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group.js'
 
 const currencies = ['EUR', 'UAH', 'USD'] as const
+const commonLeadDays = [1, 3, 7, 14, 30]
 
 export interface SubscriptionFormValues {
   name: string
@@ -63,6 +65,45 @@ function parseLeadDays(value: string): number[] | undefined {
     .filter(Boolean)
     .map(Number)
   return parts.length > 0 && parts.every((n) => Number.isInteger(n) && n >= 0) ? parts : undefined
+}
+
+function leadDayOptions(value: string): number[] {
+  return Array.from(new Set([...commonLeadDays, ...(parseLeadDays(value) ?? [])])).sort(
+    (a, b) => a - b,
+  )
+}
+
+function LeadDaysToggleGroup({
+  value,
+  onValueChange,
+}: {
+  value: string
+  onValueChange: (value: string) => void
+}) {
+  const options = leadDayOptions(value)
+  const selected = (parseLeadDays(value) ?? []).map(String)
+
+  return (
+    <ToggleGroup
+      type="multiple"
+      value={selected}
+      onValueChange={(next) =>
+        onValueChange(
+          next
+            .map(Number)
+            .sort((a, b) => a - b)
+            .join(', '),
+        )
+      }
+      aria-label="Reminder lead days"
+    >
+      {options.map((days) => (
+        <ToggleGroupItem key={days} value={String(days)} aria-label={`${days} days before`}>
+          {days} {days === 1 ? 'day' : 'days'}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
+  )
 }
 
 /** Shared shape both create and update accept - the caller narrows as needed. */
@@ -216,14 +257,12 @@ export function SubscriptionForm({
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="leadDays">Reminder lead days</Label>
-        <Input
-          id="leadDays"
-          placeholder="7, 3, 1"
+        <Label>Reminder lead days</Label>
+        <LeadDaysToggleGroup
           value={values.leadDays}
-          onChange={(e) => set('leadDays', e.target.value)}
+          onValueChange={(value) => set('leadDays', value)}
         />
-        <p className="text-sm text-muted-foreground">Comma-separated days before renewal.</p>
+        <p className="text-sm text-muted-foreground">Select when to send renewal reminders.</p>
       </div>
 
       <div className="flex min-w-0 flex-col gap-2">
@@ -238,12 +277,10 @@ export function SubscriptionForm({
 
       {values.trialEndsAt && (
         <div className="flex flex-col gap-2">
-          <Label htmlFor="trialLeadDays">Trial reminder lead days</Label>
-          <Input
-            id="trialLeadDays"
-            placeholder="3, 1"
+          <Label>Trial reminder lead days</Label>
+          <LeadDaysToggleGroup
             value={values.trialLeadDays}
-            onChange={(e) => set('trialLeadDays', e.target.value)}
+            onValueChange={(value) => set('trialLeadDays', value)}
           />
         </div>
       )}
