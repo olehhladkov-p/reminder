@@ -11,14 +11,3 @@ createRoot(document.getElementById('root')!).render(
     <Toaster position="top-center" />
   </StrictMode>,
 )
-
-// Two frames guarantees the app has actually painted before the splash
-// (see index.html - only visible in standalone/PWA mode) fades out.
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    const splash = document.getElementById('splash')
-    if (!splash) return
-    splash.classList.add('splash-hide')
-    setTimeout(() => splash.remove(), 250)
-  })
-})
