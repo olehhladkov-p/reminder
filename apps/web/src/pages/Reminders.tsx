@@ -1,15 +1,39 @@
-import type { ChannelType, NotificationJob } from '@reminder/core'
+import type { ChannelConfig, ChannelType, NotificationJob, Subscription } from '@reminder/core'
 import type { LucideIcon } from 'lucide-react'
-import { Mail, MessageCircle, Plus, Smartphone, Webhook } from 'lucide-react'
+import {
+  Mail,
+  MessageCircle,
+  MoreVertical,
+  Pencil,
+  Plus,
+  Smartphone,
+  Trash2,
+  Webhook,
+} from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { api } from '../api/client.js'
 import { useResource } from '../api/resourceCache.js'
-import { channelsCache, remindersCache, subscriptionsCache } from '../api/resources.js'
+import { channelsCache, meCache, remindersCache, subscriptionsCache } from '../api/resources.js'
 import { ListSkeleton } from '../components/skeletons.js'
 import { Badge } from '../components/ui/badge.js'
 import { Button } from '../components/ui/button.js'
 import { Card, CardContent } from '../components/ui/card.js'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog.js'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu.js'
 import { formatFriendlyDate, formatFriendlyDateTime } from '../lib/date.js'
 import { cn } from '../lib/utils.js'
 
@@ -22,6 +46,14 @@ const channelLabels: Record<ChannelType, string> = {
   push: 'Push',
   telegram: 'Telegram',
   webhook: 'Webhook',
+}
+
+function channelLabel(channel: ChannelConfig): string {
+  if (channel.type === 'push') {
+    if (channel.target.platform === 'mobile') return 'Mobile push'
+    if (channel.target.platform === 'desktop') return 'Web push'
+  }
+  return channelLabels[channel.type]
 }
 
 const channelIcons: Record<ChannelType, LucideIcon> = {
@@ -37,6 +69,7 @@ interface ReminderGroup {
   kind: NotificationJob['kind']
   occurrenceDate: string
   sendAt: Date
+  leadDays: number
   channelIds: string[]
 }
 
@@ -55,11 +88,21 @@ function groupJobsByReminder(jobs: readonly NotificationJob[]): ReminderGroup[] 
         kind: job.kind,
         occurrenceDate: job.occurrenceDate,
         sendAt: job.sendAt,
+        leadDays: job.leadDays,
         channelIds: [job.channelId],
       })
     }
   }
   return [...groups.values()]
+}
+
+function reminderLeadDays(
+  subscription: Subscription,
+  group: ReminderGroup,
+  defaultLeadDays: number[],
+) {
+  if (group.kind === 'renewal') return subscription.leadDays ?? defaultLeadDays
+  return subscription.trialLeadDays ?? subscription.leadDays ?? defaultLeadDays
 }
 
 export function Reminders() {
@@ -68,6 +111,9 @@ export function Reminders() {
   const { data: jobs, loading: jobsLoading, error: jobsError } = useResource(remindersCache)
   const { data: subscriptions } = useResource(subscriptionsCache)
   const { data: channels } = useResource(channelsCache)
+  const { data: me } = useResource(meCache)
+  const [pendingKey, setPendingKey] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ReminderGroup | null>(null)
 
   const nameById = new Map(subscriptions?.map((sub) => [sub.id, sub.name]))
   const channelById = new Map(channels?.map((channel) => [channel.id, channel]))
@@ -87,6 +133,34 @@ export function Reminders() {
       return
     }
     navigate('/reminders/new')
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    const group = deleteTarget
+    const subscription = subscriptions?.find((sub) => sub.id === group.subscriptionId)
+    if (!subscription || !me) {
+      toast.error('Reminder details are still loading. Please try again.')
+      return
+    }
+
+    setDeleteTarget(null)
+    setPendingKey(group.key)
+    try {
+      const remainingDays = reminderLeadDays(subscription, group, me.defaultLeadDays).filter(
+        (days) => days !== group.leadDays,
+      )
+      await api.subscriptions.update(
+        subscription.id,
+        group.kind === 'renewal' ? { leadDays: remainingDays } : { trialLeadDays: remainingDays },
+      )
+      await Promise.all([subscriptionsCache.refresh(), remindersCache.refresh()])
+      toast.success('Reminder deleted.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not delete the reminder.')
+    } finally {
+      setPendingKey(null)
+    }
   }
 
   return (
@@ -117,8 +191,8 @@ export function Reminders() {
         aria-busy={refreshing || undefined}
       >
         {visibleGroups.map((group) => (
-          <Card key={group.key}>
-            <CardContent className="flex flex-col gap-2">
+          <Card key={group.key} className="relative">
+            <CardContent className="flex flex-col gap-2 pr-14">
               <div className="flex flex-col items-start gap-2">
                 <Link
                   to={`/subscriptions/${group.subscriptionId}`}
@@ -138,12 +212,39 @@ export function Reminders() {
                   const ChannelIcon = channelIcons[channel.type]
                   return (
                     <Badge key={channelId} variant="outline">
-                      <ChannelIcon /> {channelLabels[channel.type]}
+                      <ChannelIcon /> {channelLabel(channel)}
                     </Badge>
                   )
                 })}
               </div>
             </CardContent>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={pendingKey === group.key}
+                  aria-label="More actions"
+                  className="absolute top-3 right-3"
+                >
+                  <MoreVertical />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onSelect={() =>
+                    navigate(
+                      `/reminders/${group.subscriptionId}/${group.kind}/${group.leadDays}/edit`,
+                    )
+                  }
+                >
+                  <Pencil /> Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(group)}>
+                  <Trash2 /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </Card>
         ))}
       </div>
@@ -153,6 +254,29 @@ export function Reminders() {
           Show all ({reminderGroups.length})
         </Button>
       )}
+
+      <Dialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete reminder?</DialogTitle>
+            <DialogDescription>
+              This deletes all scheduled {deleteTarget?.leadDays}-day reminders for “
+              {deleteTarget
+                ? (nameById.get(deleteTarget.subscriptionId) ?? 'this subscription')
+                : ''}
+              ”. This can't be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

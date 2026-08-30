@@ -1,4 +1,6 @@
-import type { ChannelConfig } from '@reminder/core'
+import type { ChannelConfig, ChannelType } from '@reminder/core'
+import type { LucideIcon } from 'lucide-react'
+import { Mail, MessageCircle, Smartphone, Webhook } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { api } from '../api/client.js'
@@ -11,6 +13,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card.
 import { Input } from '../components/ui/input.js'
 import { Label } from '../components/ui/label.js'
 import { cn } from '../lib/utils.js'
+
+const channelIcons: Record<ChannelType, LucideIcon> = {
+  email: Mail,
+  push: Smartphone,
+  telegram: MessageCircle,
+  webhook: Webhook,
+}
 
 function describeTarget(channel: ChannelConfig): string {
   if (channel.type === 'email' && typeof channel.target.email === 'string') {
@@ -93,16 +102,19 @@ export function Channels() {
       >
         {channels?.map((channel) => {
           const busy = pendingId === channel.id
+          const ChannelIcon = channelIcons[channel.type]
           return (
             <Card key={channel.id}>
               <CardContent className="flex flex-col gap-2">
-                <p className="min-w-0 truncate font-medium">{describeTarget(channel)}</p>
-                <div className="flex items-center gap-2">
-                  <Badge variant={channel.verifiedAt ? 'default' : 'secondary'}>
-                    {channel.verifiedAt ? 'Verified' : 'Not verified'}
-                  </Badge>
-                  {!channel.enabled && <Badge variant="outline">Disabled</Badge>}
-                </div>
+                <p className="flex min-w-0 items-center gap-2 truncate font-medium">
+                  <ChannelIcon className="size-4 shrink-0" />
+                  <span className="truncate">{describeTarget(channel)}</span>
+                </p>
+                {!channel.enabled && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">Disabled</Badge>
+                  </div>
+                )}
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
