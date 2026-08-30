@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Enable corepack
+        run: corepack enable
+      - name: Install pnpm
+        run: corepack prepare pnpm@latest --activate
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Biome check (lint/format)
+        run: pnpm run check
+      - name: Run tests
+        run: pnpm run test
