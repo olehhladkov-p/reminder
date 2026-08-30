@@ -1,7 +1,7 @@
 import type { Subscription } from '@reminder/core'
-import { MoreVertical, Plus, Trash2 } from 'lucide-react'
+import { Eye, MoreVertical, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { api } from '../api/client.js'
 import { useResource } from '../api/resourceCache.js'
@@ -75,6 +75,7 @@ function UpcomingBudgetBanner() {
 }
 
 export function Subscriptions() {
+  const navigate = useNavigate()
   const { data: subscriptions, loading, error } = useResource(subscriptionsCache)
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Subscription | null>(null)
@@ -171,6 +172,9 @@ export function Subscriptions() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => navigate(`/subscriptions/${sub.id}`)}>
+                    <Eye /> View details
+                  </DropdownMenuItem>
                   <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(sub)}>
                     <Trash2 /> Delete
                   </DropdownMenuItem>
