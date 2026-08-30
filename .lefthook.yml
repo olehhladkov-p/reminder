@@ -1,0 +1,5 @@
+pre-push:
+  scripts:
+    run-tests:
+      run: pnpm -w test
+      include: ['.']
