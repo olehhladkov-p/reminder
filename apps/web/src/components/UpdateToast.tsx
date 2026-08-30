@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type MaybeSWRegistration = ServiceWorkerRegistration | null
 
@@ -34,10 +34,10 @@ export function UpdateToast() {
       try {
         // Prefer messaging the waiting SW so it can call skipWaiting() itself.
         registration.waiting.postMessage({ type: 'SKIP_WAITING' })
-      } catch (err) {
+      } catch (_err) {
         // Fallback: attempt to call skipWaiting directly on the worker instance
         try {
-          const maybeSkip = (registration.waiting as any)?.skipWaiting
+          const maybeSkip = (registration.waiting as unknown as { skipWaiting?: () => Promise<void> })?.skipWaiting
           if (typeof maybeSkip === 'function') {
             await maybeSkip.call(registration.waiting)
           }
@@ -58,6 +58,7 @@ export function UpdateToast() {
         <div className="flex items-center gap-4">
           <div className="text-sm">A new version of the app is available.</div>
           <button
+            type="button"
             onClick={handleRefresh}
             className="rounded-md bg-primary px-3 py-1 text-sm font-medium text-white"
             aria-label="Refresh to update"
@@ -65,6 +66,7 @@ export function UpdateToast() {
             Refresh
           </button>
           <button
+            type="button"
             onClick={() => setVisible(false)}
             className="text-sm text-muted-foreground"
             aria-label="Dismiss update notification"
