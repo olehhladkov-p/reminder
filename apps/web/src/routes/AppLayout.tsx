@@ -24,7 +24,7 @@ export function AppLayout() {
               end={item.end}
               className={({ isActive }) =>
                 cn(
-                  'flex min-h-11 flex-1 flex-col items-center justify-center gap-1 pt-[18px] pb-2.5 text-sm font-medium text-muted-foreground transition-colors',
+                  'flex min-h-11 flex-1 flex-col items-center justify-center pt-4 pb-2.5 text-sm font-medium text-muted-foreground transition-colors',
                   isActive && 'text-primary',
                 )
               }
