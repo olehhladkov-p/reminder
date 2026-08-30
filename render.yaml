@@ -13,7 +13,27 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Off in production. For preview environments: after enabling Preview
+      # Environments on this Blueprint, open this var in the reminder-api
+      # service's Environment tab and give it a separate preview value of
+      # `true` - that makes preview deploys log magic-link URLs to the
+      # service logs instead of sending real email through Resend, so
+      # previews don't need Resend credentials at all. See
+      # apps/api/src/env.ts and apps/api/src/magicLinkEmail.ts.
+      - key: DEV_LOG_MAGIC_LINK
+        value: false
       # Neon Postgres - pooled connection (same DB as local dev).
+      #
+      # For preview environments: don't point this at the production
+      # database. Create a Neon branch for previews (Neon dashboard -> your
+      # project -> Branches -> create branch from `main`, e.g. named
+      # "preview") and use *that* branch's pooled connection string as this
+      # var's separate preview value in the reminder-api service's
+      # Environment tab (same mechanism as DEV_LOG_MAGIC_LINK above).
+      # Otherwise magic-link sign-ins during preview testing create real rows
+      # in the production `user`/`session`/`account` tables. A Neon branch is
+      # a cheap copy-on-write snapshot, so it starts with production's schema
+      # and data without needing its own migration run.
       - key: DATABASE_URL
         sync: false
       - key: BETTER_AUTH_SECRET
