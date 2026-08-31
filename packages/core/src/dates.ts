@@ -1,6 +1,6 @@
 /**
  * Plain calendar dates (year/month/day, no time-of-day, no timezone).
- * `next_renewal_date`, `trial_ends_at`, and `occurrence_date` are all
+ * `next_renewal_date` and `occurrence_date` are both
  * SQL `date` columns — modeling them as PlainDate instead of JS `Date`
  * sidesteps local-timezone-offset footguns in date arithmetic.
  */

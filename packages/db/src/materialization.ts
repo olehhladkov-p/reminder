@@ -104,8 +104,7 @@ function toMaterializeSubscription(
     intervalDays: row.intervalDays,
     anchorDay: row.anchorDay,
     leadDays: row.leadDays,
-    trialEndsAt: row.trialEndsAt ? parseIsoDate(row.trialEndsAt) : null,
-    trialLeadDays: row.trialLeadDays,
+    isTrial: row.isTrial,
   }
 }
 

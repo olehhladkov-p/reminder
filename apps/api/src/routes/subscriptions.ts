@@ -98,8 +98,7 @@ export function createSubscriptionRoutes(deps: AppDeps) {
         priceCents: body.priceCents ?? null,
         currency: body.currency ?? null,
         leadDays: body.leadDays ? normalizeLeadDays(body.leadDays) : null,
-        trialEndsAt: body.trialEndsAt ?? null,
-        trialLeadDays: body.trialLeadDays ? normalizeLeadDays(body.trialLeadDays) : null,
+        isTrial: body.isTrial ?? false,
         cancelUrl: body.cancelUrl ?? null,
         notes: body.notes ?? null,
       })
@@ -165,10 +164,7 @@ export function createSubscriptionRoutes(deps: AppDeps) {
         ...(body.leadDays !== undefined && {
           leadDays: body.leadDays ? normalizeLeadDays(body.leadDays) : null,
         }),
-        ...(body.trialEndsAt !== undefined && { trialEndsAt: body.trialEndsAt }),
-        ...(body.trialLeadDays !== undefined && {
-          trialLeadDays: body.trialLeadDays ? normalizeLeadDays(body.trialLeadDays) : null,
-        }),
+        ...(body.isTrial !== undefined && { isTrial: body.isTrial }),
         ...(body.status !== undefined && { status: body.status }),
         ...(body.cancelUrl !== undefined && { cancelUrl: body.cancelUrl }),
         ...(body.notes !== undefined && { notes: body.notes }),

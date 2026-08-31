@@ -19,8 +19,7 @@ export interface SubscriptionFormValues {
   priceCents: string
   currency: string
   leadDays: string
-  trialEndsAt: string
-  trialLeadDays: string
+  isTrial: boolean
   cancelUrl: string
   notes: string
 }
@@ -37,8 +36,7 @@ export function subscriptionToFormValues(sub: Subscription): SubscriptionFormVal
         ? sub.currency
         : 'EUR',
     leadDays: sub.leadDays?.join(', ') ?? '',
-    trialEndsAt: sub.trialEndsAt ?? '',
-    trialLeadDays: sub.trialLeadDays?.join(', ') ?? '',
+    isTrial: sub.isTrial,
     cancelUrl: sub.cancelUrl ?? '',
     notes: sub.notes ?? '',
   }
@@ -52,8 +50,7 @@ const emptyFormValues: SubscriptionFormValues = {
   priceCents: '',
   currency: 'EUR',
   leadDays: '',
-  trialEndsAt: '',
-  trialLeadDays: '',
+  isTrial: false,
   cancelUrl: '',
   notes: '',
 }
@@ -116,8 +113,7 @@ export function formValuesToInput(values: SubscriptionFormValues): CreateSubscri
     priceCents: values.priceCents.trim() ? Math.round(Number(values.priceCents) * 100) : null,
     currency: values.currency.trim() ? values.currency.trim().toUpperCase() : null,
     leadDays: parseLeadDays(values.leadDays) ?? null,
-    trialEndsAt: values.trialEndsAt.trim() || null,
-    trialLeadDays: parseLeadDays(values.trialLeadDays) ?? null,
+    isTrial: values.isTrial,
     cancelUrl: values.cancelUrl.trim() || null,
     notes: values.notes.trim() || null,
   }
@@ -262,28 +258,29 @@ export function SubscriptionForm({
           value={values.leadDays}
           onValueChange={(value) => set('leadDays', value)}
         />
-        <p className="text-sm text-muted-foreground">Select when to send renewal reminders.</p>
+        <p className="text-sm text-muted-foreground">
+          Select when to send {values.isTrial ? 'trial-end' : 'renewal'} reminders.
+        </p>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-2">
-        <Label htmlFor="trialEndsAt">Trial ends</Label>
-        <Input
-          id="trialEndsAt"
-          type="date"
-          value={values.trialEndsAt}
-          onChange={(e) => set('trialEndsAt', e.target.value)}
+      <label
+        htmlFor="isTrial"
+        className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted/30 p-4 transition-colors hover:bg-muted/50"
+      >
+        <input
+          id="isTrial"
+          type="checkbox"
+          checked={values.isTrial}
+          onChange={(e) => set('isTrial', e.target.checked)}
+          className="mt-0.5 size-4 accent-primary"
         />
-      </div>
-
-      {values.trialEndsAt && (
-        <div className="flex flex-col gap-2">
-          <Label>Trial reminder lead days</Label>
-          <LeadDaysToggleGroup
-            value={values.trialLeadDays}
-            onValueChange={(value) => set('trialLeadDays', value)}
-          />
-        </div>
-      )}
+        <span className="flex flex-col gap-1">
+          <span className="font-medium">This is a free trial</span>
+          <span className="text-sm text-muted-foreground">
+            Send a trial-end reminder on the date above using the same reminder settings.
+          </span>
+        </span>
+      </label>
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="cancelUrl">Cancel URL</Label>

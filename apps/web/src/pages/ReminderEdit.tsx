@@ -11,13 +11,8 @@ import { Card, CardContent } from '../components/ui/card.js'
 import { Input } from '../components/ui/input.js'
 import { Label } from '../components/ui/label.js'
 
-function effectiveLeadDays(
-  subscription: Subscription,
-  kind: NotificationJob['kind'],
-  defaultLeadDays: number[],
-) {
-  if (kind === 'renewal') return subscription.leadDays ?? defaultLeadDays
-  return subscription.trialLeadDays ?? subscription.leadDays ?? defaultLeadDays
+function effectiveLeadDays(subscription: Subscription, defaultLeadDays: number[]) {
+  return subscription.leadDays ?? defaultLeadDays
 }
 
 export function ReminderEdit() {
@@ -62,16 +57,13 @@ export function ReminderEdit() {
     try {
       const updatedDays = Array.from(
         new Set([
-          ...effectiveLeadDays(subscription, kind, me.defaultLeadDays).filter(
+          ...effectiveLeadDays(subscription, me.defaultLeadDays).filter(
             (value) => value !== originalLeadDays,
           ),
           parsedDays,
         ]),
       )
-      await api.subscriptions.update(
-        subscription.id,
-        kind === 'renewal' ? { leadDays: updatedDays } : { trialLeadDays: updatedDays },
-      )
+      await api.subscriptions.update(subscription.id, { leadDays: updatedDays })
       await Promise.all([subscriptionsCache.refresh(), remindersCache.refresh()])
       toast.success('Reminder updated.')
       navigate('/reminders')

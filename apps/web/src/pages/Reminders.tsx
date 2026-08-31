@@ -96,13 +96,8 @@ function groupJobsByReminder(jobs: readonly NotificationJob[]): ReminderGroup[] 
   return [...groups.values()]
 }
 
-function reminderLeadDays(
-  subscription: Subscription,
-  group: ReminderGroup,
-  defaultLeadDays: number[],
-) {
-  if (group.kind === 'renewal') return subscription.leadDays ?? defaultLeadDays
-  return subscription.trialLeadDays ?? subscription.leadDays ?? defaultLeadDays
+function reminderLeadDays(subscription: Subscription, defaultLeadDays: number[]) {
+  return subscription.leadDays ?? defaultLeadDays
 }
 
 export function Reminders() {
@@ -147,13 +142,10 @@ export function Reminders() {
     setDeleteTarget(null)
     setPendingKey(group.key)
     try {
-      const remainingDays = reminderLeadDays(subscription, group, me.defaultLeadDays).filter(
+      const remainingDays = reminderLeadDays(subscription, me.defaultLeadDays).filter(
         (days) => days !== group.leadDays,
       )
-      await api.subscriptions.update(
-        subscription.id,
-        group.kind === 'renewal' ? { leadDays: remainingDays } : { trialLeadDays: remainingDays },
-      )
+      await api.subscriptions.update(subscription.id, { leadDays: remainingDays })
       await Promise.all([subscriptionsCache.refresh(), remindersCache.refresh()])
       toast.success('Reminder deleted.')
     } catch (err) {
@@ -201,6 +193,9 @@ export function Reminders() {
                   {nameById.get(group.subscriptionId) ?? 'Subscription'}
                 </Link>
                 <Badge>Reminder on {formatFriendlyDateTime(group.sendAt)}</Badge>
+                {subscriptions?.find((sub) => sub.id === group.subscriptionId)?.isTrial && (
+                  <Badge>Trial</Badge>
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-1">
                 <Badge variant="outline">

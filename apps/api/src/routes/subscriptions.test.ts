@@ -41,6 +41,24 @@ describe('subscriptions routes', () => {
     expect(body.leadDays).toEqual([7, 3, 1])
     expect(body.cycle).toBe('monthly')
     expect(body.status).toBe('active')
+    expect(body.isTrial).toBe(false)
+  })
+
+  it('creates a one-time trial-end reminder using the subscription lead days', async () => {
+    const cookie = await signIn(testApp, 'trial@example.com')
+    const created = await post('/v1/subscriptions', cookie, {
+      name: 'Notion',
+      nextRenewalDate: '2027-06-15',
+      leadDays: [3],
+      isTrial: true,
+    })
+    expect(((await created.json()) as { isTrial: boolean }).isTrial).toBe(true)
+    await post('/v1/channels', cookie, { type: 'email', target: { email: 'trial@example.com' } })
+
+    const reminders = await testApp.app.request('/v1/reminders/upcoming', { headers: { cookie } })
+    const rows = (await reminders.json()) as Array<{ kind: string; leadDays: number }>
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ kind: 'trial_end', leadDays: 3 })
   })
 
   it('materializes jobs on create (visible via /v1/reminders/upcoming)', async () => {

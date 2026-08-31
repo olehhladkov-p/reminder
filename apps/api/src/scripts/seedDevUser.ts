@@ -125,11 +125,10 @@ async function main() {
     },
     {
       name: 'Notion (trial)',
-      nextRenewalDate: daysFromNow(33),
+      nextRenewalDate: notionTrialEnd,
       cycle: 'monthly' as const,
       anchorDay: new Date(notionTrialEnd).getUTCDate(),
-      trialEndsAt: notionTrialEnd,
-      trialLeadDays: [3, 1],
+      isTrial: true,
       status: 'active' as const,
     },
     {
