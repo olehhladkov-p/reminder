@@ -152,6 +152,7 @@ export function Subscriptions() {
                   </Badge>
                   {price && <Badge variant="secondary">{price}</Badge>}
                   <Badge variant="outline">{formatCycle(sub)}</Badge>
+                  {sub.isTrial && <Badge>Trial</Badge>}
                   {sub.status !== 'active' && (
                     <Badge variant="secondary" className="capitalize">
                       {sub.status}

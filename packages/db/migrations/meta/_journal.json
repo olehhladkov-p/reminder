@@ -22,6 +22,13 @@
       "when": 1787813836016,
       "tag": "0002_add_processing_job_status",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788192000000,
+      "tag": "0003_replace_trial_fields",
+      "breakpoints": true
     }
   ]
 }

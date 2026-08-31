@@ -30,8 +30,7 @@ export interface MaterializeSubscriptionInput {
   intervalDays?: number | null
   anchorDay: number
   leadDays?: readonly number[] | null
-  trialEndsAt?: PlainDate | null
-  trialLeadDays?: readonly number[] | null
+  isTrial?: boolean
 }
 
 export interface MaterializeUserInput {
@@ -105,13 +104,15 @@ export function materializeJobs(
 
   const renewalLeadDays = normalizeLeadDays(subscription.leadDays ?? user.defaultLeadDays)
   let occurrence = subscription.nextRenewalDate
-  for (let i = 0; i < horizon; i++) {
+  const occurrenceCount = subscription.isTrial ? 1 : horizon
+  const kind = subscription.isTrial ? 'trial_end' : 'renewal'
+  for (let i = 0; i < occurrenceCount; i++) {
     pushJobsForOccurrence(
       drafts,
       subscription,
       user,
       enabledChannels,
-      'renewal',
+      kind,
       occurrence,
       renewalLeadDays,
       options.now,
@@ -122,24 +123,6 @@ export function materializeJobs(
       anchorDay: subscription.anchorDay,
       intervalDays: subscription.intervalDays,
     })
-  }
-
-  if (subscription.trialEndsAt) {
-    const trialLeadDays = normalizeLeadDays(
-      subscription.trialLeadDays ?? subscription.leadDays ?? user.defaultLeadDays,
-    )
-    pushJobsForOccurrence(
-      drafts,
-      subscription,
-      user,
-      enabledChannels,
-      'trial_end',
-      subscription.trialEndsAt,
-      trialLeadDays,
-      options.now,
-      pastDropThresholdMs,
-      pastClampMs,
-    )
   }
 
   return drafts

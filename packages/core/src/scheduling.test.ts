@@ -100,31 +100,26 @@ describe('materializeJobs', () => {
     ).toEqual([])
   })
 
-  it('adds a one-shot trial_end job that does not roll forward', () => {
-    const drafts = materializeJobs(
-      baseSubscription({ trialEndsAt: parseIsoDate('2025-12-20') }),
-      user,
-      channels,
-      { now },
-    )
+  it('adds one-shot trial-end jobs using the subscription reminder settings', () => {
+    const drafts = materializeJobs(baseSubscription({ isTrial: true }), user, channels, { now })
     const trialJobs = drafts.filter((d) => d.kind === 'trial_end')
-    // 2 leadDays (inherited) x 2 enabled channels, one occurrence only
+    // 2 leadDays x 2 enabled channels, one occurrence only
     expect(trialJobs).toHaveLength(4)
-    expect(new Set(trialJobs.map((d) => d.occurrenceDate))).toEqual(new Set(['2025-12-20']))
+    expect(new Set(trialJobs.map((d) => d.occurrenceDate))).toEqual(new Set(['2026-01-15']))
+    expect(drafts.every((d) => d.kind === 'trial_end')).toBe(true)
   })
 
-  it('trial_end uses trialLeadDays when set, independent of renewal leadDays', () => {
+  it('trial_end falls back to the user default lead days when none are set', () => {
     const drafts = materializeJobs(
-      baseSubscription({
-        trialEndsAt: parseIsoDate('2025-12-20'),
-        trialLeadDays: [1],
-      }),
+      baseSubscription({ isTrial: true, leadDays: null }),
       user,
       channels,
-      { now },
+      {
+        now,
+      },
     )
     const trialJobs = drafts.filter((d) => d.kind === 'trial_end')
-    expect(trialJobs.map((d) => d.leadDays)).toEqual([1, 1]) // one per enabled channel
+    expect(new Set(trialJobs.map((d) => d.leadDays))).toEqual(new Set(user.defaultLeadDays))
   })
 
   it('clamps a slightly-past send_at to now + 1 minute instead of dropping it', () => {

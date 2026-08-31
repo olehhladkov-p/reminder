@@ -36,11 +36,9 @@ const baseSubscriptionFields = {
   priceCents: z.number().int().min(0).nullable().optional(),
   currency: z.string().length(3).nullable().optional(),
   leadDays: leadDaysSchema.nullable().optional(),
-  // Trial-end reminders fall back to `leadDays` (and from there to the user
-  // default) when null — see materializeJobs(). Kept as its own field so a
-  // shorter trial default can be introduced later without a migration.
-  trialEndsAt: isoDateSchema.nullable().optional(),
-  trialLeadDays: leadDaysSchema.nullable().optional(),
+  // A trial uses the subscription's renewal date and reminder settings for a
+  // one-time trial-end notification instead of a renewal notification.
+  isTrial: z.boolean().optional(),
   cancelUrl: z.string().url().nullable().optional(),
   notes: z.string().max(2000).nullable().optional(),
 }
@@ -76,8 +74,7 @@ export const subscriptionSchema = z.object({
   priceCents: z.number().int().nullable(),
   currency: z.string().nullable(),
   leadDays: leadDaysSchema.nullable(),
-  trialEndsAt: isoDateSchema.nullable(),
-  trialLeadDays: leadDaysSchema.nullable(),
+  isTrial: z.boolean(),
   status: subscriptionStatusSchema,
   cancelUrl: z.string().nullable(),
   notes: z.string().nullable(),
