@@ -1,18 +1,59 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@import "./theme-default.css";
-@import "./theme-bubble.css";
-@import "./theme-claude.css";
-@import "./theme-elegant.css";
-@import "./theme-claymorphism.css";
+@import "./themes/modern-minimal.css";
+@import "./themes/violet-bloom.css";
+@import "./themes/t3-chat.css";
+@import "./themes/twitter.css";
+@import "./themes/mocha-mousse.css";
+@import "./themes/bubblegum.css";
+@import "./themes/amethyst-haze.css";
+@import "./themes/notebook.css";
+@import "./themes/doom-64.css";
+@import "./themes/catppuccin.css";
+@import "./themes/graphite.css";
+@import "./themes/perpetuity.css";
+@import "./themes/kodama-grove.css";
+@import "./themes/cosmic-night.css";
+@import "./themes/tangerine.css";
+@import "./themes/quantum-rose.css";
+@import "./themes/nature.css";
+@import "./themes/bold-tech.css";
+@import "./themes/elegant-luxury.css";
+@import "./themes/amber-minimal.css";
+@import "./themes/supabase.css";
+@import "./themes/neo-brutalism.css";
+@import "./themes/solar-dusk.css";
+@import "./themes/claymorphism.css";
+@import "./themes/cyberpunk.css";
+@import "./themes/pastel-dreams.css";
+@import "./themes/clean-slate.css";
+@import "./themes/caffeine.css";
+@import "./themes/ocean-breeze.css";
+@import "./themes/retro-arcade.css";
+@import "./themes/midnight-bloom.css";
+@import "./themes/candyland.css";
+@import "./themes/northern-lights.css";
+@import "./themes/vintage-paper.css";
+@import "./themes/sunset-horizon.css";
+@import "./themes/starry-night.css";
+@import "./themes/claude.css";
+@import "./themes/vercel.css";
+@import "./themes/darkmatter.css";
+@import "./themes/mono.css";
+@import "./themes/soft-pop.css";
+@import "./themes/sage-garden.css";
 
 :root {
   color-scheme: light;
 }
 
+:root[data-color-mode="dark"] {
+  color-scheme: dark;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-color-mode="light"]) {
     color-scheme: dark;
   }
 }

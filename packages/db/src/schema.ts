@@ -35,6 +35,7 @@ export const subscriptionStatusEnum = pgEnum('subscription_status', [
   'paused',
   'cancelled',
 ])
+export const colorModeEnum = pgEnum('color_mode', ['light', 'dark', 'system'])
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -50,6 +51,10 @@ export const users = pgTable('users', {
   timezone: text('timezone').notNull(),
   defaultLeadDays: integer('default_lead_days').array().notNull().default(sql`ARRAY[]::integer[]`),
   digestLocalTime: time('digest_local_time').notNull().default('09:00:00'),
+  // References a theme name from apps/web/src/themes.json - validated by
+  // updateUserSchema, not a DB enum, since the theme list lives client-side.
+  theme: text('theme').notNull().default('modern-minimal'),
+  colorMode: colorModeEnum('color_mode').notNull().default('system'),
   ...timestamps,
 })
 

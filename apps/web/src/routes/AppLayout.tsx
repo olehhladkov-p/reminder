@@ -1,5 +1,9 @@
 import { Bell, CreditCard, Mail, Settings } from 'lucide-react'
+import { useEffect } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { useResource } from '@/api/resourceCache.js'
+import { meCache } from '@/api/resources.js'
+import { applyColorMode, applyTheme } from '@/lib/theme.js'
 import { cn } from '@/lib/utils.js'
 
 const navItems = [
@@ -10,6 +14,17 @@ const navItems = [
 ]
 
 export function AppLayout() {
+  // The account's saved theme/colorMode are the source of truth once signed
+  // in - re-apply them (over whatever localStorage had pre-auth) whenever the
+  // user record loads or changes, so they follow the account across devices.
+  const { data: user } = useResource(meCache)
+
+  useEffect(() => {
+    if (!user) return
+    applyTheme(user.theme)
+    applyColorMode(user.colorMode)
+  }, [user])
+
   return (
     <div className="flex min-h-svh flex-col bg-muted/30">
       <main className="mx-auto w-full max-w-lg flex-1 px-4 pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))]">

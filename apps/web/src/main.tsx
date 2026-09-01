@@ -8,6 +8,10 @@ import './index.css'
 // notify users (including installed PWAs) when a new version is available.
 import './sw-registration.js'
 import { UpdateToast } from './components/UpdateToast.js'
+import { applyColorMode, applyTheme, getStoredColorMode, getStoredTheme } from './lib/theme.js'
+
+applyTheme(getStoredTheme())
+applyColorMode(getStoredColorMode())
 
 // biome-ignore lint/style/noNonNullAssertion: index.html always has #root
 createRoot(document.getElementById('root')!).render(

@@ -1,3 +1,4 @@
+import type { User } from '@reminder/core'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { api } from '../api/client.js'
@@ -25,8 +26,15 @@ import {
   SelectValue,
 } from '../components/ui/select.js'
 import { Skeleton } from '../components/ui/skeleton.js'
-import type { Theme } from '../lib/theme.js'
-import { applyTheme, getStoredTheme, THEMES } from '../lib/theme.js'
+import type { ColorMode, Theme } from '../lib/theme.js'
+import {
+  applyColorMode,
+  applyTheme,
+  COLOR_MODES,
+  getStoredColorMode,
+  getStoredTheme,
+  THEME_OPTIONS,
+} from '../lib/theme.js'
 import { cn } from '../lib/utils.js'
 import {
   enablePushNotifications,
@@ -34,21 +42,58 @@ import {
   isPushSupported,
 } from '../push/subscribe.js'
 
-const THEME_LABELS: Record<Theme, string> = {
-  default: 'Default',
-  bubble: 'Bubble',
-  claude: 'Claude',
-  elegant: 'Elegant',
-  claymorphism: 'Claymorphism',
+// Each SelectItem is min-h-10 (40px); the viewport adds 4px padding top and
+// bottom, so 8 rows works out to 8 * 40 + 8 = 328px.
+const MAX_VISIBLE_THEME_ITEMS = 8
+const THEME_LIST_MAX_HEIGHT = `${MAX_VISIBLE_THEME_ITEMS * 40 + 8}px`
+
+const COLOR_MODE_LABELS: Record<ColorMode, string> = {
+  system: 'Use system setting',
+  light: 'Light',
+  dark: 'Dark',
 }
 
-function ThemeSection() {
-  const [theme, setTheme] = useState<Theme>(() => getStoredTheme())
+function ThemeSection({ user }: { user: User | null }) {
+  const [theme, setTheme] = useState<Theme>(() => user?.theme ?? getStoredTheme())
+  const [colorMode, setColorMode] = useState<ColorMode>(
+    () => user?.colorMode ?? getStoredColorMode(),
+  )
 
-  function handleChange(value: string) {
-    const next = value as Theme
-    setTheme(next)
-    applyTheme(next)
+  // Once the account's saved values load, reflect them here too (AppLayout
+  // applies them to the document; this just keeps the selects in sync).
+  useEffect(() => {
+    if (!user) return
+    setTheme(user.theme)
+    setColorMode(user.colorMode)
+  }, [user])
+
+  async function handleThemeChange(value: string) {
+    const previous = theme
+    setTheme(value)
+    applyTheme(value)
+    try {
+      await api.me.update({ theme: value })
+      meCache.refresh()
+    } catch (err) {
+      setTheme(previous)
+      applyTheme(previous)
+      toast.error(err instanceof Error ? err.message : 'Could not save theme.')
+    }
+  }
+
+  async function handleColorModeChange(value: string) {
+    const next = value as ColorMode
+    const previous = colorMode
+    setColorMode(next)
+    applyColorMode(next)
+    try {
+      await api.me.update({ colorMode: next })
+      meCache.refresh()
+    } catch (err) {
+      setColorMode(previous)
+      applyColorMode(previous)
+      toast.error(err instanceof Error ? err.message : 'Could not save color mode.')
+    }
   }
 
   return (
@@ -58,20 +103,38 @@ function ThemeSection() {
         <CardDescription>Choose a color theme for the app.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="theme">Theme</Label>
-          <Select value={theme} onValueChange={handleChange}>
-            <SelectTrigger id="theme">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {THEMES.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {THEME_LABELS[t]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="theme">Theme</Label>
+            <Select value={theme} onValueChange={handleThemeChange}>
+              <SelectTrigger id="theme">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent style={{ maxHeight: THEME_LIST_MAX_HEIGHT }}>
+                {THEME_OPTIONS.map((option) => (
+                  <SelectItem key={option.name} value={option.name}>
+                    {option.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="colorMode">Color mode</Label>
+            <Select value={colorMode} onValueChange={handleColorModeChange}>
+              <SelectTrigger id="colorMode">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {COLOR_MODES.map((mode) => (
+                  <SelectItem key={mode} value={mode}>
+                    {COLOR_MODE_LABELS[mode]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -234,7 +297,7 @@ export function Settings() {
         </CardContent>
       </Card>
 
-      <ThemeSection />
+      <ThemeSection user={user} />
 
       {notificationPermission !== null && (
         <Card>

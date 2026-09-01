@@ -7,6 +7,8 @@ export function toUserDto(row: typeof schema.users.$inferSelect) {
     timezone: row.timezone,
     defaultLeadDays: row.defaultLeadDays,
     digestLocalTime: row.digestLocalTime.slice(0, 5),
+    theme: row.theme,
+    colorMode: row.colorMode,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }
