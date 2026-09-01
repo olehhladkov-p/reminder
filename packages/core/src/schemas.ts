@@ -5,6 +5,7 @@ export const channelTypeSchema = z.enum(['email', 'push', 'telegram', 'webhook']
 export const jobKindSchema = z.enum(['renewal', 'trial_end'])
 export const jobStatusSchema = z.enum(['pending', 'processing', 'sent', 'failed', 'cancelled'])
 export const subscriptionStatusSchema = z.enum(['active', 'paused', 'cancelled'])
+export const colorModeSchema = z.enum(['light', 'dark', 'system'])
 
 export const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD')
 export const localTimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'expected HH:mm')
@@ -14,12 +15,18 @@ export const ianaTimezoneSchema = z.string().min(1)
 // not here — this only validates shape.
 export const leadDaysSchema = z.array(z.number().int().min(0).max(3650)).max(10)
 
+// Not validated against the real theme list (that lives in apps/web/src/themes.json,
+// a different package) - mirrors ianaTimezoneSchema's approach of trusting the client.
+export const themeNameSchema = z.string().min(1).max(100)
+
 export const userSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   timezone: ianaTimezoneSchema,
   defaultLeadDays: leadDaysSchema,
   digestLocalTime: localTimeSchema,
+  theme: themeNameSchema,
+  colorMode: colorModeSchema,
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 })
@@ -28,6 +35,8 @@ export const updateUserSchema = z.object({
   timezone: ianaTimezoneSchema.optional(),
   defaultLeadDays: leadDaysSchema.optional(),
   digestLocalTime: localTimeSchema.optional(),
+  theme: themeNameSchema.optional(),
+  colorMode: colorModeSchema.optional(),
 })
 
 const baseSubscriptionFields = {
@@ -137,6 +146,7 @@ export type ChannelType = z.infer<typeof channelTypeSchema>
 export type JobKind = z.infer<typeof jobKindSchema>
 export type JobStatus = z.infer<typeof jobStatusSchema>
 export type SubscriptionStatus = z.infer<typeof subscriptionStatusSchema>
+export type ColorMode = z.infer<typeof colorModeSchema>
 export type User = z.infer<typeof userSchema>
 export type UpdateUserInput = z.infer<typeof updateUserSchema>
 export type Subscription = z.infer<typeof subscriptionSchema>

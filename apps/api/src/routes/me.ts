@@ -50,6 +50,8 @@ export function createMeRoutes(deps: AppDeps) {
           defaultLeadDays: normalizeLeadDays(body.defaultLeadDays),
         }),
         ...(body.digestLocalTime !== undefined && { digestLocalTime: body.digestLocalTime }),
+        ...(body.theme !== undefined && { theme: body.theme }),
+        ...(body.colorMode !== undefined && { colorMode: body.colorMode }),
       })
       .where(eq(schema.users.id, userId))
       .returning()

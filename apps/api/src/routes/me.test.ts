@@ -28,6 +28,20 @@ describe('me route', () => {
     expect(body.timezone).toBe('UTC')
     expect(body.digestLocalTime).toBe('09:00')
     expect(body.defaultLeadDays).toEqual([7, 3, 1])
+    expect(body.theme).toBe('modern-minimal')
+    expect(body.colorMode).toBe('system')
+  })
+
+  it('persists theme and colorMode on PATCH', async () => {
+    const cookie = await signIn(testApp, 'a@example.com')
+    const res = await testApp.app.request('/v1/me', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', cookie },
+      body: JSON.stringify({ theme: 'vercel', colorMode: 'dark' }),
+    })
+    const body = (await res.json()) as any
+    expect(body.theme).toBe('vercel')
+    expect(body.colorMode).toBe('dark')
   })
 
   it('normalizes defaultLeadDays on PATCH and re-materializes existing subscriptions', async () => {
